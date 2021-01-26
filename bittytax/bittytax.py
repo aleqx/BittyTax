@@ -67,6 +67,12 @@ def main():
     parser.add_argument('--nopdf',
                         action='store_true',
                         help="don't output PDF report, output report to terminal only")
+    parser.add_argument('--noprice',
+                        action='store_true',
+                        help="don't output price data in Appendix")
+    parser.add_argument('--notx',
+                        action='store_true',
+                        help="don't output individual transactions")
 
     config.args = parser.parse_args()
     config.args.nocache = False

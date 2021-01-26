@@ -112,7 +112,8 @@ class ReportLog(object):
             if not config.args.summary:
                 self.income(config.args.taxyear)
                 print("\n%sAppendix%s" % (Fore.CYAN+Style.BRIGHT, Style.NORMAL))
-                self.price_data(config.args.taxyear)
+                if not config.args.noprice:
+                    self.price_data(config.args.taxyear)
         else:
             if not config.args.skipaudit and not config.args.summary:
                 self.audit()
@@ -127,8 +128,9 @@ class ReportLog(object):
             if not config.args.summary:
                 print("\n%sAppendix%s" % (Fore.CYAN+Style.BRIGHT, Style.NORMAL))
                 for tax_year in sorted(tax_report):
-                    self.price_data(tax_year)
-                    print('')
+                    if not config.args.noprice:
+                        self.price_data(tax_year)
+                        print('')
                 self.holdings()
 
     def audit(self):
@@ -151,18 +153,28 @@ class ReportLog(object):
     def capital_gains(self, tax_year):
         cgains = self.tax_report[tax_year]['CapitalGains']
 
+        if len(cgains.assets) == 0:
+            return
+
         print("%sCapital Gains" % Fore.CYAN)
+
+        header_date, header_disposal = ('', '') if config.args.notx else ('Date', 'Disposal Type')
+
         header = "%s %-10s %-28s %25s %13s %13s %13s %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
-                                                              'Date',
-                                                              'Disposal Type',
+                                                              header_date,
+                                                              header_disposal,
                                                               'Quantity',
                                                               'Cost',
                                                               'Fees',
                                                               'Proceeds',
                                                               'Gain')
+
+        if config.args.notx:
+            print('\n%s%s' % (Fore.YELLOW, header))
         for asset in sorted(cgains.assets):
             disposals = quantity = cost = fees = proceeds = gain = 0
-            print('\n%s%s' % (Fore.YELLOW, header))
+            if not config.args.notx:
+                print('\n%s%s' % (Fore.YELLOW, header))
             for te in cgains.assets[asset]:
                 disposals += 1
                 quantity += te.quantity
@@ -170,22 +182,25 @@ class ReportLog(object):
                 fees += te.fees
                 proceeds += te.proceeds
                 gain += te.gain
-                print("%s%s %-10s %-28s %25s %13s %13s %13s %s%13s" % (
-                    Fore.WHITE,
-                    te.asset.ljust(self.MAX_SYMBOL_LEN),
-                    self.format_date(te.date),
-                    te.format_disposal(),
-                    self.format_quantity(te.quantity),
-                    self.format_value(te.cost),
-                    self.format_value(te.fees),
-                    self.format_value(te.proceeds),
-                    Fore.RED if te.gain < 0 else Fore.WHITE,
-                    self.format_value(te.gain)))
+                if not config.args.notx:
+                    print("%s%s %-10s %-28s %25s %13s %13s %13s %s%13s" % (
+                        Fore.WHITE,
+                        te.asset.ljust(self.MAX_SYMBOL_LEN),
+                        self.format_date(te.date),
+                        te.format_disposal(),
+                        self.format_quantity(te.quantity),
+                        self.format_value(te.cost),
+                        self.format_value(te.fees),
+                        self.format_value(te.proceeds),
+                        Fore.RED if te.gain < 0 else Fore.WHITE,
+                        self.format_value(te.gain)))
+
+            asset_header = asset if config.args.notx else 'Total'
 
             if disposals > 1:
                 print("%s%s %-10s %-28s %25s %13s %13s %13s %s%13s" % (
                     Fore.YELLOW,
-                    'Total'.ljust(self.MAX_SYMBOL_LEN),
+                    asset_header.ljust(self.MAX_SYMBOL_LEN),
                     '',
                     '',
                     self.format_quantity(quantity),
@@ -270,40 +285,49 @@ class ReportLog(object):
         income = self.tax_report[tax_year]['Income']
 
         print("\n%sIncome\n" % Fore.CYAN)
+
+        header_date, header_income = ('', '') if config.args.notx else ('Date', 'Income Type')
+
         header = "%s %-10s %-28s %-25s %13s %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
-                                                     'Date',
-                                                     'Income Type',
+                                                     header_date,
+                                                     header_income,
                                                      'Quantity',
                                                      'Amount',
                                                      'Fees')
-        print("%s%s" % (Fore.YELLOW, header))
+        if config.args.notx:
+            print("%s%s" % (Fore.YELLOW, header))
         for asset in sorted(income.assets):
             events = quantity = amount = fees = 0
+            if not config.args.notx:
+                print('\n%s%s' % (Fore.YELLOW, header))
             for te in income.assets[asset]:
                 events += 1
                 quantity += te.quantity
                 amount += te.amount
                 fees += te.fees
-                print("%s%s %-10s %-28s %-25s %13s %13s" % (
-                    Fore.WHITE,
-                    te.asset.ljust(self.MAX_SYMBOL_LEN),
-                    self.format_date(te.date),
-                    te.type,
-                    self.format_quantity(te.quantity),
-                    self.format_value(te.amount),
-                    self.format_value(te.fees)))
+                if not config.args.notx:
+                    print("%s%s %-10s %-28s %-25s %13s %13s" % (
+                        Fore.WHITE,
+                        te.asset.ljust(self.MAX_SYMBOL_LEN),
+                        self.format_date(te.date),
+                        te.type,
+                        self.format_quantity(te.quantity),
+                        self.format_value(te.amount),
+                        self.format_value(te.fees)))
+
+            asset_header = asset if config.args.notx else 'Total'
 
             if events > 1:
-                print("%s%s %-10s %-28s %-25s %13s %13s\n" % (
+                print("%s%s %-10s %-28s %-25s %13s %13s" % (
                     Fore.YELLOW,
-                    'Total'.ljust(self.MAX_SYMBOL_LEN),
+                    asset_header.ljust(self.MAX_SYMBOL_LEN),
                     '',
                     '',
                     self.format_quantity(quantity),
                     self.format_value(amount),
                     self.format_value(fees)))
 
-        print("%s%s %-28s %-25s %13s %13s" % (
+        print("\n%s%s %-28s %-25s %13s %13s" % (
             Fore.YELLOW,
             'Income Type'.ljust(self.MAX_SYMBOL_LEN + 11),
             '',
