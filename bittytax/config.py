@@ -11,6 +11,10 @@ import dateutil.tz
 from .version import __version__
 
 class Config(object):
+    TAX_YEAR_START_MONTH = 4
+    TAX_YEAR_START_DAY = 6
+    TAX_BED_AND_BREAKFAST_DAYS = 30
+
     TZ_INFOS = {'BST': dateutil.tz.gettz('Europe/London'),
                 'GMT': dateutil.tz.gettz('Europe/London')}
     TZ_LOCAL = dateutil.tz.gettz('Europe/London')

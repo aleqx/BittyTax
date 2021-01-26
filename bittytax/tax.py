@@ -16,7 +16,7 @@ from .holdings import Holdings
 PRECISION = Decimal('0.00')
 
 def which_tax_year(timestamp):
-    if timestamp >= datetime(timestamp.year, 4, 6, tzinfo=config.TZ_LOCAL):
+    if timestamp >= datetime(timestamp.year, config.TAX_YEAR_START_MONTH, config.TAX_YEAR_START_DAY, tzinfo=config.TZ_LOCAL):
         tax_year = timestamp.year + 1
     else:
         tax_year = timestamp.year
@@ -168,7 +168,7 @@ class TaxCalculator(object):
             return b_timestamp.date() == s_timestamp.date()
         elif rule == self.DISPOSAL_BED_AND_BREAKFAST:
             return (s_timestamp.date() < b_timestamp.date() and
-                    b_timestamp.date() <= s_timestamp.date() + timedelta(days=30))
+                    b_timestamp.date() <= s_timestamp.date() + timedelta(days=config.TAX_BED_AND_BREAKFAST_DAYS))
         else:
             raise Exception
 
