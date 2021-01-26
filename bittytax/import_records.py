@@ -228,8 +228,8 @@ class TransactionRow(object):
             except InvalidOperation:
                 raise DataValueError(1, TransactionRow.HEADER[1], row[1])
 
-            if buy_quantity < 0:
-                raise DataValueError(1, TransactionRow.HEADER[1], buy_quantity)
+            # if buy_quantity < 0:
+            #     raise DataValueError(1, TransactionRow.HEADER[1], buy_quantity)
         else:
             raise MissingDataError(1, TransactionRow.HEADER[1])
 
@@ -244,8 +244,8 @@ class TransactionRow(object):
             except InvalidOperation:
                 raise DataValueError(3, TransactionRow.HEADER[3], row[3])
 
-            if buy_value < 0:
-                raise DataValueError(3, TransactionRow.HEADER[3], buy_value)
+            # if buy_value < 0:
+            #     raise DataValueError(3, TransactionRow.HEADER[3], buy_value)
 
             if buy_asset == config.CCY and buy_value != buy_quantity:
                 raise DataValueError(3, TransactionRow.HEADER[3], buy_value)
