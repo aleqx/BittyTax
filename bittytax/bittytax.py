@@ -36,8 +36,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('filename',
                         type=str,
-                        nargs='?',
-                        help="filename of transaction records, "
+                        nargs='*',
+                        help="filename(s) of transaction records, "
                              "or can read CSV data from standard input")
     parser.add_argument('-v',
                         '--version',
@@ -91,13 +91,7 @@ def main():
         print("%ssystem: %s, release: %s" % (Fore.GREEN, platform.system(), platform.release()))
         config.output_config()
 
-    try:
-        transaction_records = do_import(config.args.filename)
-    except IOError:
-        parser.exit("%sERROR%s File could not be read: %s" % (
-            Back.RED+Fore.BLACK, Back.RESET+Fore.RED, config.args.filename))
-    except ImportFailureError:
-        parser.exit()
+    transaction_records = do_import(config.args.filename, parser)
 
     if not config.args.skipaudit and not config.args.summary:
         audit = AuditRecords(transaction_records)
@@ -151,27 +145,35 @@ def validate_bnb(value):
                             config.BED_AND_BREAKFAST_DAYS))
     config.BED_AND_BREAKFAST_DAYS = value
 
-def do_import(filename):
+def do_import(filenames, parser):
     import_records = ImportRecords()
 
-    if filename:
+    for filename in filenames:
         try:
-            import_records.import_excel(filename)
-        except xlrd.XLRDError:
-            with io.open(filename, newline='', encoding='utf-8') as csv_file:
-                import_records.import_csv(csv_file)
-    else:
-        if sys.version_info[0] < 3:
-            import_records.import_csv(codecs.getreader('utf-8')(sys.stdin))
-        else:
-            import_records.import_csv(sys.stdin)
+            if filename:
+                try:
+                    import_records.import_excel(filename)
+                except xlrd.XLRDError:
+                    with io.open(filename, newline='', encoding='utf-8') as csv_file:
+                        import_records.import_csv(csv_file)
+            else:
+                if sys.version_info[0] < 3:
+                    import_records.import_csv(codecs.getreader('utf-8')(sys.stdin))
+                else:
+                    import_records.import_csv(sys.stdin)
 
-    print("%simport %s (success=%s, failure=%s)" % (
-        Fore.WHITE, 'successful' if import_records.failure_cnt <= 0 else 'failure',
-        import_records.success_cnt, import_records.failure_cnt))
+            print("%simport %s (success=%s, failure=%s)" % (
+                Fore.WHITE, 'successful' if import_records.failure_cnt <= 0 else 'failure',
+                import_records.success_cnt, import_records.failure_cnt))
 
-    if import_records.failure_cnt > 0:
-        raise ImportFailureError
+            if import_records.failure_cnt > 0:
+                raise ImportFailureError
+
+        except IOError:
+            parser.exit("%sERROR%s File could not be read: %s" % (
+                Back.RED+Fore.BLACK, Back.RESET+Fore.RED, filename))
+        except ImportFailureError:
+            parser.exit()
 
     return import_records.get_records()
 
