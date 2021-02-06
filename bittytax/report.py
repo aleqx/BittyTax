@@ -91,7 +91,7 @@ class ReportPdf(object):
         return new_fname
 
 class ReportLog(object):
-    MAX_SYMBOL_LEN = 8
+    MAX_SYMBOL_LEN = 22
     MAX_NAME_LEN = 32
     ASSET_WIDTH = MAX_SYMBOL_LEN + MAX_NAME_LEN + 3
 
@@ -160,14 +160,14 @@ class ReportLog(object):
 
         header_date, header_disposal = ('', '') if config.args.notx else ('Date', 'Disposal Type')
 
-        header = "%s %-10s %-28s %25s %13s %13s %13s %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
-                                                              header_date,
-                                                              header_disposal,
-                                                              'Quantity',
-                                                              'Cost',
-                                                              'Fees',
-                                                              'Proceeds',
-                                                              'Gain')
+        header = "%s  %-10s  %-28s  %25s  %13s  %13s  %13s  %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
+                                                                     header_date,
+                                                                     header_disposal,
+                                                                     'Quantity',
+                                                                     'Cost',
+                                                                     'Fees',
+                                                                     'Proceeds',
+                                                                     'Gain')
 
         if config.args.notx:
             print('\n%s%s' % (Fore.YELLOW, header))
@@ -183,7 +183,7 @@ class ReportLog(object):
                 proceeds += te.proceeds
                 gain += te.gain
                 if not config.args.notx:
-                    print("%s%s %-10s %-28s %25s %13s %13s %13s %s%13s" % (
+                    print("%s%s  %-10s  %-28s  %25s  %13s  %13s  %13s  %s%13s" % (
                         Fore.WHITE,
                         te.asset.ljust(self.MAX_SYMBOL_LEN),
                         self.format_date(te.date),
@@ -198,7 +198,7 @@ class ReportLog(object):
             asset_header = asset if config.args.notx else 'Total'
 
             if disposals > 1:
-                print("%s%s %-10s %-28s %25s %13s %13s %13s %s%13s" % (
+                print("%s%s  %-10s  %-28s  %25s  %13s  %13s  %13s  %s%13s" % (
                     Fore.YELLOW,
                     asset_header.ljust(self.MAX_SYMBOL_LEN),
                     '',
@@ -211,7 +211,7 @@ class ReportLog(object):
                     self.format_value(gain)))
 
         print("%s%s" % (Fore.YELLOW, '_' * len(header)))
-        print("%s%s %-10s %-28s %25s %13s %13s %13s %s%13s%s" % (
+        print("%s%s  %-10s  %-28s  %25s  %13s  %13s  %13s  %s%13s%s" % (
             Fore.YELLOW+Style.BRIGHT,
             'Total'.ljust(self.MAX_SYMBOL_LEN),
             '',

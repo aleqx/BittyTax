@@ -73,6 +73,14 @@ def main():
     parser.add_argument('--notx',
                         action='store_true',
                         help="don't output individual transactions")
+    parser.add_argument('--yearstart',
+                        type=validate_start_of_year,
+                        help="tax year start date as DD-MM (default %02d-%02d)" % (
+                            config.tax_year_start_day, config.tax_year_start_month))
+    parser.add_argument('--bnb',
+                        type=validate_bnb,
+                        help="bed and breakfast duration must be at least 1 (default %d)" % (
+                            config.bed_and_breakfast_days))
 
     config.args = parser.parse_args()
     config.args.nocache = False
@@ -126,6 +134,22 @@ def validate_year(value):
             max(CCG.CG_DATA_INDIVIDUALS)))
 
     return year
+
+def validate_start_of_year(value):
+    day, month = map(int, value.split('-', 2))
+    month_days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]  # 29 Feb will never be a tax year start date
+    if month > 12 or month < 1 or day < 1 or day > month_days[month]:
+        raise argparse.ArgumentTypeError("tax year start date as DD-MM (default %d-%d)" % (
+            config.tax_year_start_day, config.tax_year_start_month))
+    config.tax_year_start_day = day
+    config.tax_year_start_month = month
+
+def validate_bnb(value):
+    value = int(value)
+    if value < 1:
+        raise argparse.ArgumentTypeError("bed and breakfast duration must be at least 1 (default %d)" % (
+                            config.BED_AND_BREAKFAST_DAYS))
+    config.BED_AND_BREAKFAST_DAYS = value
 
 def do_import(filename):
     import_records = ImportRecords()
@@ -191,3 +215,6 @@ def do_tax(transaction_records, tax_year, summary):
             tax.calculate_holdings(value_asset)
 
     return tax, value_asset
+
+if __name__ == "__main__":
+    main()
