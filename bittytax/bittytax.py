@@ -73,6 +73,10 @@ def main():
     parser.add_argument('--notx',
                         action='store_true',
                         help="don't output individual transactions")
+    parser.add_argument('--nowallet', '--nowallets',
+                        dest='ignore_wallet_names',
+                        action='store_true',
+                        help="ignore wallet names and assume a single global wallet")
     parser.add_argument('--yearstart',
                         type=validate_start_of_year,
                         help="tax year start date as DD-MM (default %02d-%02d)" % (

@@ -40,7 +40,7 @@ class TransactionRecord(object):
         self.buy = buy
         self.sell = sell
         self.fee = fee
-        self.wallet = wallet
+        self.wallet = "" if config.ignore_wallet_names or config.args.ignore_wallet_names else wallet
         self.timestamp = timestamp
 
         if self.buy:
