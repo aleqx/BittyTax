@@ -142,8 +142,8 @@ def validate_bnb(value):
     value = int(value)
     if value < 1:
         raise argparse.ArgumentTypeError("bed and breakfast duration must be at least 1 (default %d)" % (
-                            config.BED_AND_BREAKFAST_DAYS))
-    config.BED_AND_BREAKFAST_DAYS = value
+                            config.bed_and_breakfast_days))
+    config.bed_and_breakfast_days = value
 
 def do_import(filenames, parser):
     import_records = ImportRecords()
