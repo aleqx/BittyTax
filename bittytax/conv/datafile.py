@@ -117,9 +117,9 @@ class DataFile(object):
 
                 if sys.version_info[0] < 3:
                     # special handling required for utf-8 encoded csv files
-                    reader = csv.reader(cls.utf_8_encoder(csv_file), delimiter=delimiter)
+                    reader = csv.reader(cls.utf_8_encoder(csv_file), delimiter=delimiter, skipinitialspace=True)
                 else:
-                    reader = csv.reader(csv_file, delimiter=delimiter)
+                    reader = csv.reader(csv_file, delimiter=delimiter, skipinitialspace=True)
 
                 parser = cls.get_parser(reader)
                 if parser is not None:
