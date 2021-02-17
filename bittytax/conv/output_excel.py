@@ -16,9 +16,9 @@ from .output_csv import OutputBase
 
 if platform.system() == 'Darwin':
     # Default size for MacOS
-    FONT_SIZE = 12
+    FONT_SIZE = 10
 else:
-    FONT_SIZE = 11
+    FONT_SIZE = 9
 
 class OutputExcel(OutputBase):
     FILE_EXTENSION = 'xlsx'
@@ -38,13 +38,15 @@ class OutputExcel(OutputBase):
                                       'comments': self.PROJECT_URL})
 
         self.format_out_header = self.workbook.add_format({'font_size': FONT_SIZE,
-                                                           'font_color': 'white',
-                                                           'bold': True,
-                                                           'bg_color': 'black'})
+                                                           #'font_color': 'white',
+                                                           #'bold': True,
+                                                           #'bg_color': 'black'
+                                                           })
         self.format_in_header = self.workbook.add_format({'font_size': FONT_SIZE,
-                                                          'font_color': 'white',
-                                                          'bold': True,
-                                                          'bg_color': self.FONT_COLOR_IN_DATA})
+                                                          #'font_color': 'white',
+                                                          #'bold': False,
+                                                          #'bg_color': self.FONT_COLOR_IN_DATA
+                                                          })
         self.format_out_data = self.workbook.add_format({'font_size': FONT_SIZE,
                                                          'font_color': 'black'})
         self.format_in_data = self.workbook.add_format({'font_size': FONT_SIZE,
@@ -280,7 +282,7 @@ class Worksheet(object):
 
     def make_table(self, rows, parser_name):
         self.worksheet.add_table(0, 0, rows, len(self.columns) - 1,
-                                 {'autofilter': False,
-                                  'style': 'Table Style Medium 13',
+                                 {'autofilter': True,
+                                  'style': 'Table Style Medium 9',
                                   'columns': self.columns,
                                   'name': self._table_name(parser_name)})
