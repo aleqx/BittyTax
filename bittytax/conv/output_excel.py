@@ -229,18 +229,18 @@ class Worksheet(object):
 
     def _xl_quantity(self, quantity, row_num, col_num):
         if quantity is not None:
-            if len(quantity.normalize().as_tuple().digits) > OutputBase.EXCEL_PRECISION:
-                self.worksheet.write_string(row_num, col_num,
-                                            '{0:f}'.format(quantity.normalize()),
-                                            self.output.format_num_string)
-            else:
-                self.worksheet.write_number(row_num, col_num,
-                                            quantity.normalize(), self.output.format_num_float)
-                cell = xl_rowcol_to_cell(row_num, col_num)
-                self.worksheet.conditional_format(row_num, col_num, row_num, col_num,
-                                                  {'type': 'formula',
-                                                   'criteria': '=INT(' + cell + ')=' + cell,
-                                                   'format':  self.output.format_num_int})
+            # if len(quantity.normalize().as_tuple().digits) > OutputBase.EXCEL_PRECISION:
+            #     self.worksheet.write_string(row_num, col_num,
+            #                                 '{0:f}'.format(quantity.normalize()),
+            #                                 self.output.format_num_string)
+            # else:
+            self.worksheet.write_number(row_num, col_num,
+                                        quantity.normalize(), self.output.format_num_float)
+            cell = xl_rowcol_to_cell(row_num, col_num)
+            self.worksheet.conditional_format(row_num, col_num, row_num, col_num,
+                                              {'type': 'formula',
+                                               'criteria': '=INT(' + cell + ')=' + cell,
+                                               'format':  self.output.format_num_int})
             self._autofit_calc(col_num, len('{:0,f}'.format(quantity.normalize())))
 
     def _xl_asset(self, asset, row_num, col_num):
