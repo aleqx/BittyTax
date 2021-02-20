@@ -23,48 +23,48 @@ from ..exceptions import UnexpectedTypeError
 
 WALLET = "Celsius"
 
-def parse_celsius(row, parser, _filename):
-    r = row.in_row
+def parse_celsius(data_row, parser, _filename):
+    in_row = data_row.in_row
 
-    if r[8] != "Yes" and not config.args.unconfirmed:
+    if in_row[8] != "Yes" and not config.args.unconfirmed:
         sys.stderr.write("%srow[%s] %s\n" % (
-            Fore.YELLOW, parser.in_header_row_num + row.line_num, row))
+            Fore.YELLOW, parser.in_header_row_num + data_row.line_num, data_row))
         sys.stderr.write("%sWARNING%s Skipping unconfirmed transaction, "
                          "use the [-uc] option to include it\n" % (
                              Back.YELLOW+Fore.BLACK, Back.RESET+Fore.YELLOW))
         return
 
-    row.timestamp = DataParser.parse_timestamp(r[1])
+    data_row.timestamp = DataParser.parse_timestamp(in_row[1])
 
-    if r[2] in ('interest'):
-        row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_INTEREST,
-                                            row.timestamp,
-                                            buy_quantity=r[4],
-                                            buy_asset=r[3],
-                                            wallet=WALLET)
+    if in_row[2] in ('interest'):
+        data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_INTEREST,
+                                                 data_row.timestamp,
+                                                 buy_quantity=in_row[4],
+                                                 buy_asset=in_row[3],
+                                                 wallet=WALLET)
 
-    elif r[2] in ('promo_code_reward', 'referred_award', 'referrer_award', 'bonus_token'):
-        row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_RECEIVED,
-                                            row.timestamp,
-                                            buy_quantity=r[4],
-                                            buy_asset=r[3],
-                                            wallet=WALLET)
+    elif in_row[2] in ('promo_code_reward', 'referred_award', 'referrer_award', 'bonus_token'):
+        data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_RECEIVED,
+                                                 data_row.timestamp,
+                                                 buy_quantity=in_row[4],
+                                                 buy_asset=in_row[3],
+                                                 wallet=WALLET)
 
-    elif r[2] in ('deposit', 'inbound_transfer'):
-        row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_DEPOSIT,
-                                            row.timestamp,
-                                            buy_quantity=r[4],
-                                            buy_asset=r[3],
-                                            wallet=WALLET)
+    elif in_row[2] in ('deposit', 'inbound_transfer'):
+        data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_DEPOSIT,
+                                                 data_row.timestamp,
+                                                 buy_quantity=in_row[4],
+                                                 buy_asset=in_row[3],
+                                                 wallet=WALLET)
 
-    elif r[2] in ('withdrawal', 'outbound_transfer'):
-        row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_WITHDRAWAL,
-                                            row.timestamp,
-                                            sell_quantity=r[4],
-                                            sell_asset=r[3],
-                                            wallet=WALLET)
+    elif in_row[2] in ('withdrawal', 'outbound_transfer'):
+        data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_WITHDRAWAL,
+                                                 data_row.timestamp,
+                                                 sell_quantity=in_row[4],
+                                                 sell_asset=in_row[3],
+                                                 wallet=WALLET)
     else:
-        raise UnexpectedTypeError(2, parser.in_header[2], r[2])
+        raise UnexpectedTypeError(2, parser.in_header[2], in_row[2])
 
 
 DataParser(DataParser.TYPE_WALLET,

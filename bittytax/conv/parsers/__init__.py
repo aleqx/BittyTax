@@ -28,9 +28,11 @@ from . import kucoin
 from . import ledgerlive
 from . import liquid
 from . import nexo
+from . import nexo_api
 from . import okex
 from . import poloniex
 from . import qtwallet
+from . import stex
 from . import tradesatoshi
 from . import trezor
 from . import uphold
