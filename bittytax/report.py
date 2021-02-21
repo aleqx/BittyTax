@@ -103,7 +103,7 @@ class ReportLog(object):
 
         print("%stax report output:" % Fore.WHITE)
         if config.args.taxyear:
-            if not config.args.skipaudit and not config.args.summary:
+            if not config.args.summary:
                 self.audit()
 
             print("\n%sTax Year - %d/%d%s" % (
@@ -115,7 +115,7 @@ class ReportLog(object):
                 if not config.args.noprice:
                     self.price_data(config.args.taxyear)
         else:
-            if not config.args.skipaudit and not config.args.summary:
+            if not config.args.summary:
                 self.audit()
 
             for tax_year in sorted(tax_report):
@@ -318,36 +318,40 @@ class ReportLog(object):
             asset_header = asset if config.args.notx else 'Total'
 
             if events > 1:
-                print("%s%s %-10s %-28s %-25s %13s %13s" % (
+                print("%s%s %-10s %-28s %-25s %13s %13s %13s" % (
                     Fore.YELLOW,
                     asset_header.ljust(self.MAX_SYMBOL_LEN),
+                    '',
                     '',
                     '',
                     self.format_quantity(quantity),
                     self.format_value(amount),
                     self.format_value(fees)))
 
-        print("\n%s%s %-28s %-25s %13s %13s" % (
+        print("\n%s%s %-28s %-25s %13s %13s %13s" % (
             Fore.YELLOW,
             'Income Type'.ljust(self.MAX_SYMBOL_LEN + 11),
+            '',
             '',
             '',
             'Amount',
             'Fees'))
 
         for i_type in sorted(income.type_totals):
-            print("%s%s %-28s %-25s %13s %13s" % (
+            print("%s%s %-10s %-40s %-25s %13s %13s" % (
                 Fore.WHITE,
                 i_type.ljust(self.MAX_SYMBOL_LEN + 11),
+                '',
                 '',
                 '',
                 self.format_value(income.type_totals[i_type]['amount']),
                 self.format_value(income.type_totals[i_type]['fees'])))
 
         print("%s%s" % (Fore.YELLOW, '_' * len(header)))
-        print("%s%s %-28s %-25s %13s %13s%s" % (
+        print("%s%s %-10s %-40s %-25s %13s %13s%s" % (
             Fore.YELLOW+Style.BRIGHT,
             'Total'.ljust(self.MAX_SYMBOL_LEN + 11),
+            '',
             '',
             '',
             self.format_value(income.totals['amount']),

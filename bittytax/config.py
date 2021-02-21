@@ -36,6 +36,10 @@ class Config(object):
     TRADE_ASSET_TYPE_SELL = 1
     TRADE_ASSET_TYPE_PRIORITY = 2
 
+    TRADE_ALLOWABLE_COST_BUY = 0
+    TRADE_ALLOWABLE_COST_SELL = 1
+    TRADE_ALLOWABLE_COST_SPLIT = 2
+
     DATA_SOURCE_FIAT = ['ExchangeRatesAPI', 'RatesAPI']
     DATA_SOURCE_CRYPTO = ['CryptoCompare', 'CoinGecko']
 
@@ -43,8 +47,10 @@ class Config(object):
         'fiat_list': FIAT_LIST,
         'crypto_list': CRYPTO_LIST,
         'trade_asset_type': TRADE_ASSET_TYPE_PRIORITY,
+        'trade_allowable_cost_type': TRADE_ALLOWABLE_COST_SPLIT,
         'show_empty_wallets': False,
         'transfers_include': True,
+        'transfer_fee_disposal': False,
         'data_source_select': {},
         'data_source_fiat': DATA_SOURCE_FIAT,
         'data_source_crypto': DATA_SOURCE_CRYPTO,
@@ -52,6 +58,7 @@ class Config(object):
         'tax_year_start_month': TAX_YEAR_START_MONTH,
         'bed_and_breakfast_days': BED_AND_BREAKFAST_DAYS,
         'ignore_wallet_names': False,
+        'coinbase_zero_fees_are_gifts': False,
     }
 
     def __init__(self):

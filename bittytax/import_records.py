@@ -65,8 +65,11 @@ class ImportRecords(object):
     @staticmethod
     def convert_cell(cell, workbook):
         if cell.ctype == xlrd.XL_CELL_DATE:
-            value = xlrd.xldate.xldate_as_datetime(cell.value, workbook.datemode). \
-                         strftime('%Y-%m-%d %H:%M:%S')
+            datetime = xlrd.xldate.xldate_as_datetime(cell.value, workbook.datemode)
+            if datetime.microsecond:
+                value = datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')
+            else:
+                value = datetime.strftime('%Y-%m-%d %H:%M:%S')
         elif cell.ctype in (xlrd.XL_CELL_NUMBER, xlrd.XL_CELL_BOOLEAN, xlrd.XL_CELL_ERROR):
             # repr is required to ensure no precision is lost
             value = repr(cell.value)
@@ -142,7 +145,7 @@ class TransactionRow(object):
               'Buy Quantity', 'Buy Asset', 'Buy Value',
               'Sell Quantity', 'Sell Asset', 'Sell Value',
               'Fee Quantity', 'Fee Asset', 'Fee Value',
-              'Wallet', 'Timestamp']
+              'Wallet', 'Timestamp', 'Note']
 
     BUY_TYPES = (TransactionRecord.TYPE_DEPOSIT,
                  TransactionRecord.TYPE_MINING,
@@ -200,12 +203,24 @@ class TransactionRow(object):
         if fee_asset:
             # Fees are added as a separate spend transaction
             fee = Sell(TransactionRecord.TYPE_SPEND, fee_quantity, fee_asset, fee_value)
+
+            # Transfers fees are a special case
             if t_type in self.TRANSFER_TYPES:
-                # A fee spend is normally a disposal unless it's part of a transfer
-                fee.disposal = False
+                if config.transfers_include:
+                    # Not a disposal, fees removed from the pool at zero cost
+                    fee.disposal = False
+                else:
+                    # Not a disposal (unless configured otherwise)
+                    if not config.transfer_fee_disposal:
+                        fee.disposal = False
+
+        if len(self.row) == len(self.HEADER):
+            note = self.row[12]
+        else:
+            note = ''
 
         self.t_record = TransactionRecord(t_type, buy, sell, fee, self.row[10],
-                                          self.parse_timestamp(self.row[11]))
+                                          self.parse_timestamp(self.row[11]), note)
 
     @staticmethod
     def parse_timestamp(timestamp_str):

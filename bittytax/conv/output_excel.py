@@ -23,6 +23,8 @@ else:
 class OutputExcel(OutputBase):
     FILE_EXTENSION = 'xlsx'
     DATE_FORMAT = 'yyyy-mm-dd hh:mm:ss'
+    DATE_FORMAT_MS = 'yyyy-mm-dd hh:mm:ss.000' # Excel can only display milliseconds
+    STR_FORMAT_MS = '%Y-%m-%dT%H:%M:%S.%f'
     FONT_COLOR_IN_DATA = '#808080'
     TITLE = 'BittyTax Records'
     PROJECT_URL = 'https://github.com/BittyTax/BittyTax'
@@ -70,6 +72,9 @@ class OutputExcel(OutputBase):
         self.format_timestamp = self.workbook.add_format({'font_size': FONT_SIZE,
                                                           'font_color': 'black',
                                                           'num_format': self.DATE_FORMAT})
+        self.format_timestamp_ms = self.workbook.add_format({'font_size': FONT_SIZE,
+                                                             'font_color': 'black',
+                                                             'num_format': self.DATE_FORMAT_MS})
 
     def write_excel(self):
         data_files = sorted(self.data_files, key=lambda df: df.parser.worksheet_name, reverse=False)
@@ -119,6 +124,7 @@ class Worksheet(object):
                                                        data_file.parser.worksheet_name))
         self.col_width = {}
         self.columns = self._make_columns(data_file.parser.in_header)
+        self.microseconds, self.milliseconds = self._is_microsecond_timestamp(data_file.data_rows)
 
         self.worksheet.freeze_panes(1, len(self.output.BITTYTAX_OUT_HEADER))
 
@@ -176,6 +182,15 @@ class Worksheet(object):
 
         return columns
 
+    @staticmethod
+    def _is_microsecond_timestamp(data_rows):
+        milliseconds = bool([dr.t_record.timestamp for dr in data_rows
+                             if dr.t_record and dr.t_record.timestamp.microsecond % 1000])
+        microseconds = bool([dr.t_record.timestamp for dr in data_rows
+                             if dr.t_record and dr.t_record.timestamp.microsecond])
+
+        return milliseconds, microseconds
+
     def add_row(self, data_row, row_num):
         self.worksheet.set_row(row_num, None, self.output.format_out_data)
 
@@ -193,6 +208,7 @@ class Worksheet(object):
             self._xl_value(data_row.t_record.fee_value, row_num, 9)
             self._xl_wallet(data_row.t_record.wallet, row_num, 10)
             self._xl_timestamp(data_row.t_record.timestamp, row_num, 11)
+            self._xl_note(data_row.t_record.note, row_num, 12)
 
         if sys.version_info[0] < 3:
             in_row = [r.decode('utf8') for r in data_row.in_row]
@@ -202,13 +218,13 @@ class Worksheet(object):
         # Add original data
         for col_num, col_data in enumerate(in_row):
             if data_row.failure and data_row.failure.col_num == col_num:
-                self.worksheet.write(row_num, 12 + col_num, col_data,
-                                     self.output.format_in_data_err)
+                self.worksheet.write(row_num, len(self.output.BITTYTAX_OUT_HEADER) + col_num,
+                                     col_data, self.output.format_in_data_err)
             else:
-                self.worksheet.write(row_num, 12 + col_num, col_data,
-                                     self.output.format_in_data)
+                self.worksheet.write(row_num, len(self.output.BITTYTAX_OUT_HEADER) + col_num,
+                                     col_data, self.output.format_in_data)
 
-            self._autofit_calc(12 + col_num, len(col_data))
+            self._autofit_calc(len(self.output.BITTYTAX_OUT_HEADER) + col_num, len(col_data))
 
     def _xl_type(self, t_type, row_num, col_num):
         if t_type in self.BUY_LIST:
@@ -263,8 +279,24 @@ class Worksheet(object):
         utc_timestamp = timestamp.astimezone(config.TZ_UTC)
         utc_timestamp = timestamp.replace(tzinfo=None)
 
-        self.worksheet.write_datetime(row_num, col_num, utc_timestamp, self.output.format_timestamp)
-        self._autofit_calc(col_num, len(self.output.DATE_FORMAT))
+        if self.microseconds:
+            # Excel datetime can only display milliseconds
+            self.worksheet.write_string(row_num, col_num,
+                                        utc_timestamp.strftime(self.output.STR_FORMAT_MS),
+                                        self.output.format_num_string)
+            self._autofit_calc(col_num, len(utc_timestamp.strftime(self.output.STR_FORMAT_MS)))
+        elif self.milliseconds:
+            self.worksheet.write_datetime(row_num, col_num, utc_timestamp,
+                                          self.output.format_timestamp_ms)
+            self._autofit_calc(col_num, len(self.output.DATE_FORMAT_MS))
+        else:
+            self.worksheet.write_datetime(row_num, col_num, utc_timestamp,
+                                          self.output.format_timestamp)
+            self._autofit_calc(col_num, len(self.output.DATE_FORMAT))
+
+    def _xl_note(self, note, row_num, col_num):
+        self.worksheet.write_string(row_num, col_num, note)
+        self._autofit_calc(col_num, len(note) if note else self.MAX_COL_WIDTH)
 
     def _autofit_calc(self, col_num, width):
         if width > self.MAX_COL_WIDTH:

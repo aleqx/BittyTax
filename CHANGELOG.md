@@ -1,20 +1,56 @@
 # Change Log
 ## [Unreleased]
+Important:- A new Note field has been added to the end of the transaction record format (column M), this is used to add a description to a transaction. It is recommended that you add the additional Note column to all your existing transaction records.
 ### Fixed
 - Accounting tool: "xlrd.biffh.XLRDError: Excel xlsx file; not supported" Exception. ([#36](https://github.com/BittyTax/BittyTax/issues/36))
+- Coinbase parser: added support for Convert transactions ([#46](https://github.com/BittyTax/BittyTax/issues/46))
+- Coinbase parser: mis-classifying trade as gift-received ([#47](https://github.com/BittyTax/BittyTax/issues/47))
+- Accounting tool: unexpected treatment of withdrawal fees (transfers_include=False) ([#56](https://github.com/BittyTax/BittyTax/issues/56))
+- Accounting tool: assets which only have matched disposals are not shown in holdings report ([#60](https://github.com/BittyTax/BittyTax/issues/60))
 ### Added
 - Etherscan parser: added internal transactions export.
 - Binance parser: added cash deposit and withdrawal exports.
 - Binance parser: added statements export.
 - Bitfinex parser: new "Trades" data file format added. ([#41](https://github.com/BittyTax/BittyTax/issues/41))
 - Bittrex parser: new deposits data file format added.
+- Coinbase parser: new config "coinbase_zero_fees_are_gifts" added.
+- Accounting/Conversion tool: support for milli/microsecond timestamps.
+- Accounting tool: export option for transaction records with prices.
+- Price/Accounting tool: support for duplicate symbol names. ([#34](https://github.com/BittyTax/BittyTax/issues/34))
+- Price tool: search option (-s) added to list command.
+- Price tool: data source (-ds) option added to list command.
+- Accounting tool: config for allowable cost attribution.
+- Accounting tool: integrity check (disposals between transfers).
+- Accounting tool: warning given if disposal detected between transfers.
+- Accounting tool: integrity check (audit balances against section 104 pools).
+- Accounting tool: skip integrity check (--skipint) option added.
+- Accounting tool: new Note field added to transaction record format.
+- Accounting tool: note field added to income report.
+- Conversion tool: note field added to the Excel and CSV output.
+- Accounting tool: new config "transfer_fee_disposal" added (transfers_include=False) ([#56](https://github.com/BittyTax/BittyTax/issues/56)).
 ### Changed
 - Conversion tool: UnknownAddressError exception changed to generic DataFilenameError.
 - Binance parser: use filename to determine if deposits or withdrawals.
 - Binance parser: updated quote assets via new script.
 - Crypto.com parser: added new "Supercharger" transaction types. ([#38](https://github.com/BittyTax/BittyTax/issues/38))
 - Coinbase parser: added Coinbase Earn/Rewards Income transactions.
+- Coinbase parser: get value (from spot price) where possible.
 - Bittrex parser: added market buy/sell transactions.
+- Ledger Live parser: fees now optional, as missing from ERC-20 wallets.
+- Bitstamp parser: fees now optional.
+- Accounting tool: same day pooling debug now only shows the pooled transactions.
+- Accounting tool: section 104 debug also shows matched transactions.
+- Crypto.com parser: added "campaign_reward" transaction type. ([#64](https://github.com/BittyTax/BittyTax/issues/64))
+- Elecrum parser: Note field is mapped from 'label'.
+- HandCash parser: Note field is mapped from 'note'.
+- Qt Wallet parser: Note field is mapped from 'Label'.
+- Trezor parser: Note field is mapped from 'Address Label'.
+- Accounting tool: get value for fee if matching buy/sell asset has zero quantity or no price.
+- Accounting tool: don't drop zero quantity buy/sell if fee value present.
+- Accounting tool: ordering of all transactions when transfers_include=False.
+### Removed
+- Accounting tool: skip audit (-s or --skipaudit) option removed.
+- Accounting tool: updated transactions debug removed.
 
 ## Version [0.4.3] Beta (2020-12-04)
 Important:- if upgrading, please remove your price data cache file for CryptoCompare: `~/.bittytax/cache/CryptoCompare.json` (see Issue [#29](https://github.com/BittyTax/BittyTax/issues/29))

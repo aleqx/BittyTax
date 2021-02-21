@@ -17,7 +17,7 @@ class OutputBase(object):
                            'Buy Quantity', 'Buy Asset', 'Buy Value',
                            'Sell Quantity', 'Sell Asset', 'Sell Value',
                            'Fee Quantity', 'Fee Asset', 'Fee Value',
-                           'Wallet', 'Timestamp']
+                           'Wallet', 'Timestamp', 'Note']
 
     RECAP_OUT_HEADER = ['Type', 'Date',
                         'InOrBuyAmount', 'InOrBuyCurrency',
@@ -130,6 +130,13 @@ class OutputCsv(OutputBase):
         return self._to_bittytax_csv(t_record)
 
     @staticmethod
+    def _format_timestamp(timestamp):
+        if timestamp.microsecond:
+            return timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f %Z')
+        else:
+            return timestamp.strftime('%Y-%m-%dT%H:%M:%S %Z')
+
+    @staticmethod
     def _to_bittytax_csv(tr):
         if tr.buy_quantity is not None and \
                 len(tr.buy_quantity.normalize().as_tuple().digits) > OutputBase.EXCEL_PRECISION:
@@ -165,7 +172,8 @@ class OutputCsv(OutputBase):
                 '{0:f}'.format(tr.fee_value.normalize()) if tr.fee_value is not None \
                                                          else None,
                 tr.wallet,
-                tr.timestamp.strftime('%Y-%m-%dT%H:%M:%S %Z')]
+                OutputCsv._format_timestamp(tr.timestamp),
+                tr.note]
 
     @staticmethod
     def _to_recap_csv(tr):
