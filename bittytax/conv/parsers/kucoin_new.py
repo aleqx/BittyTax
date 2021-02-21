@@ -86,7 +86,7 @@ def parse_kucoin_transfers(data_row, parser, _filename):
     elif in_row[1] == "WITHDRAW":
         data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_WITHDRAWAL,
                                                  data_row.timestamp,
-                                                 sell_quantity=in_row[4][1:],
+                                                 sell_quantity=abs(Decimal(in_row[4])),
                                                  sell_asset=in_row[0],
                                                  wallet=WALLET)  # yes, there is no fee column, RIP
     else:
