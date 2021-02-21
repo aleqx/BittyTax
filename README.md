@@ -14,7 +14,7 @@ I'm adding functionality to [BittyTax](https://github.com/BittyTax/BittyTax) tha
 Usage is at one own's risk.
 
 Additions/changes:
-- more/fixed parsers (Celsius, Crypto.com, etc - see commits)
+- more/fixed parsers (Celsius, Crypto.com, Kucoin, etc - see commits)
 - more options (config and/or command-line):
   - specify tax year start date (applies to businesses)
   - specify BnB duration (applies to businsses)
@@ -23,6 +23,7 @@ Additions/changes:
   - hide detailed transaction rows (useful when debugging)
 - allow negative amounts for buy (can deal with refunds/reverted transactions)
 - address TGBP price issues
+- deal with renamed tokens (conf option)
 - subtotals per asset in reports (helps debugging)
 - ability to specify multiple files or wildcards for the main and conv tools (e.g. `bittytax *.xlsx screwed/*.csv`)
 - remove string storage in Excel (15 decimals is enough for me and is a pain to fix in Excel; Excel truncates anyway)
@@ -41,7 +42,13 @@ bed_and_breakfast_days: 30
 ignore_wallet_names: False
 
 # list of GBP stablecoins (addresses exchange rate issues)
-gbp_stablecoins: ['TGBP']
+gbp_stablecoin_list: ['TGBP']
+
+# renamed assets $old: $new
+renamed_asset_list: {
+    "XZC": "FIRO",
+    "LOKI": "OXEN",
+}
 ```
 
 Command-line additions:
