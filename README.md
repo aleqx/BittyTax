@@ -27,6 +27,27 @@ Additions/changes:
 - remove string storage in Excel (15 decimals is enough for me and is a pain to fix in Excel; Excel truncates anyway)
 - restyled Excel output (smaller font, etc - personal preference)
 
+bittytax.conf additions:
+```shell
+# day and month for your financial start of year
+tax_year_start_day: 6
+tax_year_start_month: 4
+
+# bed and breakfast rule duration in days
+bed_and_breakfast_days: 30
+
+# ignore wallet names (consider a single global wallet)
+ignore_wallet_names: False
+```
+
+Command-line additions:
+```shell
+  --noprice             don't output price data in Appendix
+  --notx                don't output individual transactions
+  --nowallets           ignore wallet names and assume a single global wallet
+  --yearstart DD-MM     tax year start date (default 04-06)
+  --bnb BNB             bed and breakfast duration (default 30)
+```
 
 # BittyTax
 BittyTax is a collection of command-line tools to help you calculate your cryptoasset taxes in the UK.
