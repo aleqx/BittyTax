@@ -60,7 +60,7 @@ def parse_celsius(data_row, parser, _filename):
     elif in_row[2] in ('withdrawal', 'outbound_transfer'):
         data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_WITHDRAWAL,
                                                  data_row.timestamp,
-                                                 sell_quantity=in_row[4],
+                                                 sell_quantity=in_row[4][1:],
                                                  sell_asset=in_row[3],
                                                  wallet=WALLET)
     else:
