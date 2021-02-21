@@ -9,6 +9,7 @@ import platform
 import colorama
 from colorama import Fore, Back
 import xlrd
+import glob
 
 from ..version import __version__
 from ..config import config
@@ -86,7 +87,14 @@ def main():
         sys.stderr.write("%ssystem: %s, release: %s\n" % (
             Fore.GREEN, platform.system(), platform.release()))
 
-    for filename in config.args.filename:
+    real_filenames = []
+    for f in config.args.filename:
+        if isinstance(glob.glob(f), list):
+            real_filenames = real_filenames + glob.glob(f)
+        else:
+            real_filenames.append(f)
+
+    for filename in real_filenames:
         try:
             try:
                 DataFile.read_excel(filename)
@@ -120,3 +128,6 @@ def main():
             sys.stderr.write(Fore.RESET)
             sys.stderr.flush()
             output.write_csv()
+
+if __name__ == "__main__":
+    main()
