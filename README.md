@@ -22,6 +22,7 @@ Additions/changes:
   - hide detailed price rows (useful when debugging)
   - hide detailed transaction rows (useful when debugging)
 - allow negative amounts for buy (can deal with refunds/reverted transactions)
+- address TGBP price issues
 - subtotals per asset in reports (helps debugging)
 - ability to specify multiple files or wildcards for the main and conv tools (e.g. `bittytax *.xlsx screwed/*.csv`)
 - remove string storage in Excel (15 decimals is enough for me and is a pain to fix in Excel; Excel truncates anyway)
