@@ -11,6 +11,7 @@ import platform
 import colorama
 from colorama import Fore, Back
 import xlrd
+import glob
 
 from .version import __version__
 from .config import config
@@ -150,9 +151,15 @@ def validate_bnb(value):
     config.bed_and_breakfast_days = value
 
 def do_import(filenames, parser):
-    import_records = ImportRecords()
+    real_filenames = []
+    for f in filenames:
+        if isinstance(glob.glob(f), list):
+            real_filenames = real_filenames + glob.glob(f)
+        else:
+            real_filenames.append(f)
 
-    for filename in filenames:
+    import_records = ImportRecords()
+    for filename in real_filenames:
         try:
             if filename:
                 try:
