@@ -25,6 +25,7 @@ from . import hotbit
 from . import ii
 from . import kraken
 from . import kucoin
+from . import kucoin_new
 from . import ledgerlive
 from . import liquid
 from . import nexo
