@@ -78,6 +78,11 @@ def main():
                         dest='output_filename',
                         type=str,
                         help="specify the output filename")
+    parser.add_argument('--fee',
+                        dest='fee',
+                        type=float,
+                        default=0.0,
+                        help="fee in percentage when the file contains no fee info (e.g. Kucoin v1)")
 
     config.args = parser.parse_args()
 
