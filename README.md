@@ -9,19 +9,24 @@
 [![Donation badge][donation-badge]][PayPal]
 
 # Enhanced fork of BittyTax
-I'm adding functionality to BittyTax that I need or find useful, (some) which may make it into the upstream code as well. The additions/changes are:
+I'm adding functionality to [BittyTax](https://github.com/BittyTax/BittyTax) that I need or find useful, (some) which may make it into the upstream code as well. I attempt to keep this fork updated with latest changes from upstream. 
+
+Usage is at one own's risk.
+
+Additions/changes:
 - more/fixed parsers (Celsius, Crypto.com, etc - see commits)
-- more command line and config options:
-  - specify tax year start date (for businesses)
-  - specify BnB duration (for businsses)
-  - ignore wallet names (consider a single big wallet, useful for debugging)
-  - hide detailed price rows (useful for easier debugging)
-  - hide detailed transaction rows (useful for easier debugging)
+- more options (config and/or command-line):
+  - specify tax year start date (applies to businesses)
+  - specify BnB duration (applies to businsses)
+  - ignore wallet names (treat as one big wallet, useful when debugging)
+  - hide detailed price rows (useful when debugging)
+  - hide detailed transaction rows (useful when debugging)
 - allow negative amounts for buy (can deal with refunds/reverted transactions)
 - subtotals per asset in reports (helps debugging)
 - ability to specify multiple files or wildcards for the main and conv tools (e.g. `bittytax *.xlsx screwed/*.csv`)
 - remove string storage in Excel (15 decimals is enough for me and is a pain to fix in Excel; Excel truncates anyway)
-- restyled Excel output (smaller font, etc - personal preference) 
+- restyled Excel output (smaller font, etc - personal preference)
+
 
 # BittyTax
 BittyTax is a collection of command-line tools to help you calculate your cryptoasset taxes in the UK.
