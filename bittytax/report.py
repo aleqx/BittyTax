@@ -288,7 +288,7 @@ class ReportLog(object):
 
         header_date, header_income = ('', '') if config.args.notx else ('Date', 'Income Type')
 
-        header = "%s %-10s %-10s %-40s %-25s %13s %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
+        header = "%s  %-10s  %-10s  %-40s%-25s %13s %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
                                                            header_date,
                                                            header_income,
                                                            'Description',
@@ -307,11 +307,12 @@ class ReportLog(object):
                 amount += te.amount
                 fees += te.fees
                 if not config.args.notx:
-                    print("%s%s %-10s %-40s %-25s %13s %13s" % (
+                    print("%s%s  %-10s  %-10s  %-40s %-25s %13s %13s" % (
                         Fore.WHITE,
                         te.asset.ljust(self.MAX_SYMBOL_LEN),
                         self.format_date(te.date),
                         te.type,
+                        te.note,
                         self.format_quantity(te.quantity),
                         self.format_value(te.amount),
                         self.format_value(te.fees)))
@@ -319,7 +320,7 @@ class ReportLog(object):
             asset_header = asset if config.args.notx else 'Total'
 
             if events > 1:
-                print("%s%s %-10s %-10s %-40s %-25s %13s %13s" % (
+                print("%s%s  %-10s  %-10s  %-40s %-25s %13s %13s" % (
                     Fore.YELLOW,
                     asset_header.ljust(self.MAX_SYMBOL_LEN),
                     '',
