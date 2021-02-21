@@ -197,10 +197,16 @@ class TransactionRow(object):
             raise UnexpectedTransactionTypeError(0, self.HEADER[0], t_type)
 
         if buy_asset:
+            if buy_asset in config.gbp_stablecoins and not buy_value:  # TGBP workaround
+                buy_value = buy_quantity
             buy = Buy(t_type, buy_quantity, buy_asset, buy_value)
         if sell_asset:
+            if sell_asset in config.gbp_stablecoins and not sell_value:  # TGBP workaround
+                sell_value = sell_quantity
             sell = Sell(t_type, sell_quantity, sell_asset, sell_value)
         if fee_asset:
+            if fee_asset in config.gbp_stablecoins and not fee_value:  # TGBP workaround
+                fee_value = fee_quantity
             # Fees are added as a separate spend transaction
             fee = Sell(TransactionRecord.TYPE_SPEND, fee_quantity, fee_asset, fee_value)
 

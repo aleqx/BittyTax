@@ -27,6 +27,7 @@ class Config(object):
 
     FIAT_LIST = ['GBP', 'EUR', 'USD']
     CRYPTO_LIST = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'USDT']
+    GBP_STABLECOIN_LIST = ['TGBP']
 
     FORMAT_CSV = 'CSV'
     FORMAT_EXCEL = 'EXCEL'
@@ -58,6 +59,7 @@ class Config(object):
         'tax_year_start_month': TAX_YEAR_START_MONTH,
         'bed_and_breakfast_days': BED_AND_BREAKFAST_DAYS,
         'ignore_wallet_names': False,
+        'gbp_stablecoins': GBP_STABLECOIN_LIST,
         'coinbase_zero_fees_are_gifts': False,
     }
 

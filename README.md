@@ -38,6 +38,9 @@ bed_and_breakfast_days: 30
 
 # ignore wallet names (consider a single global wallet)
 ignore_wallet_names: False
+
+# list of GBP stablecoins (addresses exchange rate issues)
+gbp_stablecoins: ['TGBP']
 ```
 
 Command-line additions:
