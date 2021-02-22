@@ -104,7 +104,8 @@ def parse_kucoin_trades_v1_gui(data_row, parser, _filename):
         raise UnexpectedTypeError(6, parser.in_header[6], in_row[6])
 
 def parse_kucoin_transfers(data_row, parser, _filename):
-    # Kucoin does not show withdrawal fee (RIP)
+    # Kucoin does not show withdrawal fee (RIP), but you
+    # may optionally add it manually in the 7th column
     in_row = data_row.in_row
     data_row.timestamp = DataParser.parse_timestamp(in_row[5], tz='Asia/Hong_Kong')
 
@@ -115,11 +116,15 @@ def parse_kucoin_transfers(data_row, parser, _filename):
                                                  buy_asset=in_row[0],
                                                  wallet=WALLET)
     elif in_row[1] == "WITHDRAW":
+        fee_quantity = in_row[6] if len(in_row) > 6 and in_row[6] else None
+        fee_asset = in_row[0] if len(in_row) > 6 and in_row[6] else ''
         data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_WITHDRAWAL,
                                                  data_row.timestamp,
                                                  sell_quantity=abs(Decimal(in_row[4])),
                                                  sell_asset=in_row[0],
-                                                 wallet=WALLET)  # yes, there is no fee column, RIP
+                                                 fee_quantity=fee_quantity,
+                                                 fee_asset=fee_asset,
+                                                 wallet=WALLET)
     else:
         raise UnexpectedTypeError(1, parser.in_header[1], in_row[1])
 
@@ -144,5 +149,11 @@ DataParser(DataParser.TYPE_EXCHANGE,
 DataParser(DataParser.TYPE_EXCHANGE,
            WALLET,
            ['coin_type', 'type', 'add', 'hash', 'vol', 'created_at'],
+           worksheet_name=WALLET,
+           row_handler=parse_kucoin_transfers)
+
+DataParser(DataParser.TYPE_EXCHANGE,
+           WALLET,
+           ['coin_type', 'type', 'add', 'hash', 'vol', 'created_at', 'fee'],
            worksheet_name=WALLET,
            row_handler=parse_kucoin_transfers)
