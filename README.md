@@ -11,9 +11,7 @@
 # Enhanced fork of BittyTax
 I'm adding functionality to [BittyTax](https://github.com/BittyTax/BittyTax) that I need or find useful, (some) which may make it into the upstream code as well. I attempt to keep this fork updated with latest changes from upstream. 
 
-Usage is at one own's risk.
-
-Additions/changes:
+Usage is at one own's risk. Additions/changes:
 - more/fixed parsers (Celsius, Crypto.com, Kucoin, etc - see commits)
 - more options (config and/or command-line):
   - specify tax year start date (applies to businesses)
@@ -59,6 +57,21 @@ Command-line additions:
   --yearstart DD-MM     tax year start date (default 04-06)
   --bnb BNB             bed and breakfast duration (default 30)
 ```
+
+## Note regarding buy, sell, fee quantities
+
+With regards to the spreadsheet data expected by BittyTax, it is important that the correct amount of buy, sell and fee is used, which may not be the same as the one exported by the exchange you used. Specifically, Bittytax expects the following:
+
+- if the `Fee Asset` is the same as `Sell Asset`, then the `Sell Quantity` must be the **net** amount (after fee deduction), not gross amount.
+- if the `Fee Asset` is the same as `Buy Asset`, then the `Buy Quantity` must be the **gross** amount (before fee deduction), not net amount.
+
+The audit process will check whether `Total Buy = Total Sell + Total Fees`.
+
+When manually importing data from an exchange into BittyTax you may need to make changes since not all exchanges follow the above rules. The parsers included in BittyTax already take care of this aspect.
+
+If fees were charged but the records you have don't show fee information and you can't work it out, or if the fee asset is different to both the sell and buy assets, then use gross amounts for both Buy and Sell for BittyTax.
+
+---
 
 # BittyTax
 BittyTax is a collection of command-line tools to help you calculate your cryptoasset taxes in the UK.
@@ -171,7 +184,8 @@ The transaction Type dictates which fields in the row are required, either (M)an
 | `Charity-Sent` |||| M | M | O | O | O | O | O | M |
 | `Trade` | M | M | O | M | M | O | O | O | O | O | M
 
-- If fees are specified, the Buy Quantity or Sell Quantity should be the gross amount (i.e. prior to any fee adjustment).
+- ~~If fees are specified, the Buy Quantity or Sell Quantity should be the gross amount (i.e. prior to any fee adjustment).~~
+Please refer to the Note in the preamble regarding the buy, sell, fee quantities.
 
 - The Buy Value, Sell Value and Fee Value fields are always optional, if you don't provide a fixed value, bittytax will calculate the value for you via one of its price data sources.
 
