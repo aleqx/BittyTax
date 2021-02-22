@@ -7,6 +7,7 @@ import io
 import sys
 import codecs
 import platform
+import re
 
 import colorama
 from colorama import Fore, Back
@@ -169,7 +170,7 @@ def validate_bnb(value):
 def do_import(filenames, parser):
     real_filenames = []
     for f in filenames:
-        if isinstance(glob.glob(f), list):
+        if re.search(r'\{.*?\}|\[.*?\]|\*|\?', f) and isinstance(glob.glob(f), list):
             real_filenames = real_filenames + glob.glob(f)
         else:
             real_filenames.append(f)

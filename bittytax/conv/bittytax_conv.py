@@ -5,6 +5,7 @@ import argparse
 import sys
 import codecs
 import platform
+import re
 
 import colorama
 from colorama import Fore, Back
@@ -94,7 +95,7 @@ def main():
 
     real_filenames = []
     for f in config.args.filename:
-        if isinstance(glob.glob(f), list):
+        if re.search(r'\{.*?\}|\[.*?\]|\*|\?', f) and isinstance(glob.glob(f), list):
             real_filenames = real_filenames + glob.glob(f)
         else:
             real_filenames.append(f)
