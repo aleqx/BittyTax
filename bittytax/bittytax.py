@@ -70,10 +70,10 @@ def main():
     parser.add_argument('--nopdf',
                         action='store_true',
                         help="don't output PDF report, output report to terminal only")
-    parser.add_argument('--noprice',
+    parser.add_argument('--noprice', '--noprices',
                         action='store_true',
                         help="don't output price data in Appendix")
-    parser.add_argument('--notx',
+    parser.add_argument('--notx', '--notxs',
                         action='store_true',
                         help="don't output individual transactions")
     parser.add_argument('--nowallet', '--nowallets',
@@ -88,12 +88,39 @@ def main():
                         type=validate_bnb,
                         help="bed and breakfast duration must be at least 1 (default %d)" % (
                             config.bed_and_breakfast_days))
+    parser.add_argument('--wallets', '--wallet',
+                        dest='wallets_re',
+                        type=str,
+                        default='',
+                        help="regex case insensitive, consider only transactions belonging to specified wallet(s)")
+    parser.add_argument('--transfers',
+                        dest="transfers_include",
+                        type=int,
+                        default=int(config.transfers_include),
+                        help="1=consider transfers, 0=ignore transfers from tax calculation only, -1=ignore transfers entirely")
+    parser.add_argument('--noteinclude',
+                        dest="note_include_re",
+                        type=str,
+                        default='',
+                        help="regex case insensitive, include only rows whose Note field matches")
+    parser.add_argument('--noteexclude',
+                        dest="note_exclude_re",
+                        type=str,
+                        default='',
+                        help="regex case insensitive, exclude rows whose Note field matches (can be used in conjunction with --noteinclude)")
     parser.add_argument('--export',
                         action='store_true',
                         help="export your transaction records populated with price data")
+    parser.add_argument('--noauditwarning',
+                        action='store_true',
+                        help="ignore audit warnings about negative balances")
 
     config.args = parser.parse_args()
     config.args.nocache = False
+    config.args.wallets_re = re.compile(config.args.wallets_re, re.I) if config.args.wallets_re else None
+    config.args.note_include_re = re.compile(config.args.note_include_re, re.I) if config.args.note_exclude_re else None
+    config.args.note_exclude_re = re.compile(config.args.note_exclude_re, re.I) if config.args.note_exclude_re else None
+    config.transfers_include = config.args.transfers_include > 0
 
     if config.args.debug:
         print("%s%s v%s" % (Fore.YELLOW, parser.prog, __version__))
@@ -179,6 +206,9 @@ def do_import(filenames, parser):
     for filename in real_filenames:
         try:
             if filename:
+                if filename[0] == '~':
+                    print("%sWARNING%s Skipping file: %s" % (Back.YELLOW + Fore.BLACK, Back.RESET + Fore.YELLOW, filename))
+                    continue
                 try:
                     import_records.import_excel(filename)
                 except xlrd.XLRDError:

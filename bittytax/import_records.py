@@ -4,6 +4,7 @@
 import sys
 import csv
 from decimal import Decimal, InvalidOperation
+import re
 
 from colorama import Fore, Back
 from tqdm import tqdm, trange
@@ -22,6 +23,13 @@ class ImportRecords(object):
         self.t_rows = []
         self.success_cnt = 0
         self.failure_cnt = 0
+
+    @staticmethod
+    def is_row_excluded(row):
+        return row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0 \
+                or config.args.wallets_re and row[10] and not re.search(config.args.wallets_re, row[10]) \
+                or config.args.note_exclude_re and row[12] and re.search(config.args.note_exclude_re, row[12]) \
+                or config.args.note_include_re and row[12] and not re.search(config.args.note_include_re, row[12])
 
     def import_excel(self, filename):
         workbook = xlrd.open_workbook(filename)
@@ -42,6 +50,9 @@ class ImportRecords(object):
 
                 row = [self.convert_cell(worksheet.cell(row_num, cell_num), workbook)
                        for cell_num in range(0, worksheet.ncols)]
+
+                if self.is_row_excluded(row):
+                    continue
 
                 t_row = TransactionRow(row[:len(TransactionRow.HEADER)], row_num+1, worksheet.name)
                 try:
@@ -98,6 +109,9 @@ class ImportRecords(object):
                         disable=bool(config.args.debug or not sys.stdout.isatty())):
             if reader.line_num == 1:
                 # skip headers
+                continue
+
+            if self.is_row_excluded(row):
                 continue
 
             t_row = TransactionRow(row[:len(TransactionRow.HEADER)], reader.line_num)

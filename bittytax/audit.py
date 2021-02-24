@@ -98,7 +98,7 @@ class AuditRecords(object):
                 '{:0,f}'.format(self.wallets[wallet][asset].normalize()),
                 '{:0,f}'.format(quantity.normalize())))
 
-        if self.wallets[wallet][asset] < 0 and asset not in config.fiat_list:
+        if self.wallets[wallet][asset] < 0 and asset not in config.fiat_list and not config.args.noauditwarning:
             tqdm.write("%sWARNING%s Balance at %s:%s is negative %s" % (
                 Back.YELLOW+Fore.BLACK, Back.RESET+Fore.YELLOW,
                 wallet, asset, '{:0,f}'.format(self.wallets[wallet][asset].normalize())))
