@@ -42,7 +42,7 @@ def parse_nexo(data_row, parser, _filename):
                              Back.YELLOW+Fore.BLACK, Back.RESET+Fore.YELLOW))
         return
 
-    data_row.timestamp = DataParser.parse_timestamp(in_row[6])
+    data_row.timestamp = DataParser.parse_timestamp(in_row[6], tz='Europe/Amsterdam')
 
     if in_row[1] in ("Deposit", "ExchangeDepositedOn"):
         data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_DEPOSIT,
