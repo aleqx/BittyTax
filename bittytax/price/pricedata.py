@@ -81,15 +81,15 @@ class PriceData(object):
                     print("%sprice: <latest>, 1 %s=%s %s via %s (%s)" % (
                         Fore.YELLOW,
                         asset,
-                        '{:0,f}'.format(price.normalize()),
+                        '{:0,.8f}'.format(price),
                         quote,
                         self.data_sources[data_source.upper()].name(),
                         name))
                 if self.price_tool:
-                    print("%s1 %s=%s %s %svia %s (%s)" % (
+                    print("%s1 %s = %s %s %svia %s (%s)" % (
                         Fore.YELLOW,
                         asset,
-                        '{:0,f}'.format(price.normalize()),
+                        '{:0,.8f}'.format(price),
                         quote,
                         Fore.CYAN,
                         self.data_sources[data_source.upper()].name(),
@@ -103,19 +103,19 @@ class PriceData(object):
             price, name, url = self.get_historical_ds(data_source, asset, quote, timestamp)
             if price is not None:
                 if config.args.debug:
-                    print("%sprice: %s, 1 %s=%s %s via %s (%s)" % (
+                    print("%sprice: %s, 1 %s = %s %s via %s (%s)" % (
                         Fore.YELLOW,
                         timestamp.strftime('%Y-%m-%d'),
                         asset,
-                        '{:0,f}'.format(price.normalize()),
+                        '{:0,.8f}'.format(price),
                         quote,
                         self.data_sources[data_source.upper()].name(),
                         name))
                 if self.price_tool:
-                    print("%s1 %s=%s %s %svia %s (%s)" % (
+                    print("%s1 %s = %s %s %svia %s (%s)" % (
                         Fore.YELLOW,
                         asset,
-                        '{:0,f}'.format(price.normalize()),
+                        '{:0,.8f}'.format(price),
                         quote,
                         Fore.CYAN,
                         self.data_sources[data_source.upper()].name(),

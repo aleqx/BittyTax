@@ -60,6 +60,11 @@ def main():
                                type=validate_quantity,
                                nargs='?',
                                help="quantity to price (optional)")
+    parser_latest.add_argument('targetasset',
+                               type=str.upper,
+                               nargs='?',
+                               default=config.CCY,
+                               help="convert into specificed target asset (optional, default=%s)" % config.CCY)
     parser_latest.add_argument('-ds',
                                choices=datasource_choices(upper=True) + ['ALL'],
                                metavar='{' + ', '.join(datasource_choices()) + '} or ALL',
@@ -91,6 +96,11 @@ def main():
                                 type=validate_quantity,
                                 nargs='?',
                                 help="quantity to price (optional)")
+    parser_history.add_argument('targetasset',
+                                type=str.upper,
+                                nargs='?',
+                                default=config.CCY,
+                                help="convert into specificed target asset (optional, default=%s)" % config.CCY)
     parser_history.add_argument('-ds',
                                 choices=datasource_choices(upper=True) + ['ALL'],
                                 metavar='{' + ', '.join(datasource_choices()) + '} or ALL',
@@ -140,6 +150,7 @@ def main():
 
     if config.args.command in (CMD_LATEST, CMD_HISTORY):
         symbol = config.args.asset[0]
+        target_symbol = config.args.targetasset
         asset = price = False
 
         try:
@@ -180,12 +191,13 @@ def main():
                 value_asset = ValueAsset(price_tool=True)
                 if config.args.command == CMD_HISTORY:
                     price_ccy, name, _ = value_asset.get_historical_price(symbol,
-                                                                          config.args.date[0])
+                                                                          config.args.date[0],
+                                                                          target_symbol)
                 else:
-                    price_ccy, name, _ = value_asset.get_latest_price(symbol)
+                    price_ccy, name, _ = value_asset.get_latest_price(symbol, target_symbol)
 
                 if price_ccy is not None:
-                    output_price(symbol, price_ccy)
+                    output_price(symbol, price_ccy, target_symbol)
                     price = True
 
                 if name is not None:
@@ -243,23 +255,25 @@ def get_historic_btc_price(date):
                                                                                      date)
     return btc
 
-def output_price(symbol, price_ccy):
-    print("%s1 %s=%s %s" % (
+def output_price(symbol, price_ccy, target_symbol=config.CCY):
+    print("%s1 %s = %s %s" % (
         Fore.WHITE,
         symbol,
-        config.sym() + '{:0,.2f}'.format(price_ccy),
-        config.CCY))
+        # config.sym() + '{:0,.8f}'.format(price_ccy),
+        '{:0,.8f}'.format(price_ccy),
+        target_symbol))
     if config.args.quantity:
         quantity = Decimal(config.args.quantity)
-        print("%s%s %s=%s %s" % (
+        print("%s%s %s = %s %s" % (
             Fore.WHITE,
             '{:0,f}'.format(quantity.normalize()),
             symbol,
-            config.sym() + '{:0,.2f}'.format(quantity * price_ccy),
-            config.CCY))
+            # config.sym() + '{:0,.2f}'.format(quantity * price_ccy),
+            '{:0,.8f}'.format(quantity * price_ccy),
+            target_symbol))
 
 def output_ds_price(asset):
-    print("%s1 %s=%s %s %svia %s (%s)%s" % (
+    print("%s1 %s = %s %s %svia %s (%s)%s" % (
         Fore.YELLOW,
         asset['symbol'],
         '{:0,f}'.format(asset['price'].normalize()),
@@ -311,3 +325,6 @@ def datasource_choices(upper=False):
     if upper:
         return sorted([ds.__name__.upper() for ds in DataSourceBase.__subclasses__()])
     return sorted([ds.__name__ for ds in DataSourceBase.__subclasses__()])
+
+if __name__ == "__main__":
+    main()

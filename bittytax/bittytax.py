@@ -19,6 +19,7 @@ from .config import config
 from .import_records import ImportRecords
 from .export_records import ExportRecords
 from .transactions import TransactionHistory
+from .record import TransactionRecord
 from .audit import AuditRecords
 from .price.valueasset import ValueAsset
 from .price.exceptions import DataSourceError
@@ -114,6 +115,9 @@ def main():
     parser.add_argument('--noauditwarning',
                         action='store_true',
                         help="ignore audit warnings about negative balances")
+    parser.add_argument('--allowgiftdupes',
+                        action='store_true',
+                        help="ignore duplicates between gifts and deposits/withdrawals")
 
     config.args = parser.parse_args()
     config.args.nocache = False
@@ -129,6 +133,9 @@ def main():
         config.output_config()
 
     transaction_records = do_import(config.args.filename, parser)
+
+    if not config.args.allowgiftdupes:
+        transaction_records = remove_gift_dupes(transaction_records)
 
     if config.args.export:
         do_export(transaction_records)
@@ -166,6 +173,34 @@ def main():
                   tax.tax_report,
                   value_asset.price_report,
                   tax.holdings_report)
+
+def is_gift_dupe(tx1: TransactionRecord, tx2: TransactionRecord):
+    return tx1.timestamp == tx2.timestamp and (
+            (  # received
+                (tx1.t_type == TransactionRecord.TYPE_GIFT_RECEIVED and tx2.t_type == TransactionRecord.TYPE_DEPOSIT
+                 or tx2.t_type == TransactionRecord.TYPE_GIFT_RECEIVED and tx1.t_type == TransactionRecord.TYPE_DEPOSIT)
+                and tx1.buy.asset == tx2.buy.asset
+                and abs(tx1.buy.quantity - tx2.buy.quantity) <= 0.00000001
+            ) or (  # sent
+                (tx1.t_type == TransactionRecord.TYPE_GIFT_SPOUSE and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
+                 or tx2.t_type == TransactionRecord.TYPE_GIFT_SPOUSE and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL
+                 or tx1.t_type == TransactionRecord.TYPE_GIFT_SENT and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
+                 or tx2.t_type == TransactionRecord.TYPE_GIFT_SENT and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL
+                 or tx1.t_type == TransactionRecord.TYPE_CHARITY_SENT and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
+                 or tx2.t_type == TransactionRecord.TYPE_CHARITY_SENT and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL)
+                and tx1.sell.asset == tx2.sell.asset
+                and abs(tx1.sell.quantity - tx2.sell.quantity) <= 0.00000001
+            )
+    )
+
+def remove_gift_dupes(txs):
+    indices = []
+    for i in range(1, len(txs)):
+        if is_gift_dupe(txs[i-1], txs[i]):
+            indices.insert(0, i-1)
+    for i in indices:
+        del txs[i]
+    return txs
 
 def validate_year(value):
     year = int(value)
