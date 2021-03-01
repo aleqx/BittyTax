@@ -10,6 +10,8 @@
 #  - The types "lockup_swap_credited", "interest_swap_credited" do _not_ seem redundant.
 #  Revisit if any evidence is presented to the contrary of any of the above.
 
+import re
+
 from decimal import Decimal
 from functools import reduce
 
@@ -31,6 +33,8 @@ def parse_crypto_com_all(data_rows, parser, _filename):
     for data_row in data_rows:
         try:
             in_row = data_row.in_row
+            # parse time here, not in the handler parse_crypto_com() since we
+            # must skip/ignore rows here as well, and the time needs to be parsed for those too
             data_row.timestamp = DataParser.parse_timestamp(in_row[0])
             if in_row[9] in ("dust_conversion_credited", "crypto_wallet_swap_credited",
                              "lockup_swap_credited", "interest_swap_credited"):
@@ -75,7 +79,9 @@ def parse_crypto_com(data_row, parser, _filename):
                                                      note=note,
                                                      wallet=WALLET)
         else:
-            data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_SENT,
+            data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_SPOUSE
+                                                     if config.args.spouse and re.search(config.args.spouse, in_row[1])
+                                                     else TransactionOutRecord.TYPE_GIFT_SENT,
                                                      data_row.timestamp,
                                                      sell_quantity=abs(Decimal(in_row[3])),
                                                      sell_asset=in_row[2],
@@ -134,13 +140,20 @@ def parse_crypto_com(data_row, parser, _filename):
                                                  wallet=WALLET)
 
     elif in_row[9] in ("card_cashback_reverted", "reimbursement_reverted"):
-        data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_SENT,
+        data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_RECEIVED,
                                                  data_row.timestamp,
-                                                 sell_quantity=abs(Decimal(in_row[3])),
-                                                 sell_asset=in_row[2],
-                                                 sell_value=get_value(in_row),
+                                                 buy_quantity=-abs(Decimal(in_row[3])),
+                                                 buy_asset=in_row[2],
+                                                 buy_value=-abs(get_value(in_row)),
                                                  note=note,
                                                  wallet=WALLET)
+        # data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_GIFT_SENT,
+        #                                          data_row.timestamp,
+        #                                          sell_quantity=abs(Decimal(in_row[3])),
+        #                                          sell_asset=in_row[2],
+        #                                          sell_value=get_value(in_row),
+        #                                          note=note,
+        #                                          wallet=WALLET)
     elif in_row[9] in ("crypto_payment", "card_top_up"):
         data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_SPEND,
                                                  data_row.timestamp,

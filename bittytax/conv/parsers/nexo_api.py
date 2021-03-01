@@ -43,7 +43,7 @@ def parse_nexo(data_row, parser, _filename):
                              Back.YELLOW+Fore.BLACK, Back.RESET+Fore.YELLOW))
         return
 
-    data_row.timestamp = DataParser.parse_timestamp(in_row[7], tz='Europe/Amsterdam')
+    data_row.timestamp = DataParser.parse_timestamp(in_row[7], tz='GMT+1')
 
     if in_row[6] in ("Deposit", "ExchangeDepositedOn"):
         data_row.t_record = TransactionOutRecord(TransactionOutRecord.TYPE_DEPOSIT,
@@ -92,7 +92,7 @@ def parse_nexo(data_row, parser, _filename):
 
 DataParser(DataParser.TYPE_EXCHANGE,
            "Nexo API",
-           ['debit', 'currency_pseudonym', 'credit', 'currency_short_name',
+           ['credit', 'currency_pseudonym', 'debit', 'currency_short_name',
             'fee', 'usd_value', 'type_id', 'time_formated', 'status',
             'txid', 'crypto_wallet_address'],
            worksheet_name="Nexo-API",

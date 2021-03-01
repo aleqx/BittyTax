@@ -84,8 +84,17 @@ def main():
                         type=float,
                         default=0.0,
                         help="fee in percentage when the file contains no fee info (e.g. Kucoin v1)")
+    parser.add_argument('-w', '--wallet',
+                        type=str,
+                        default='',
+                        help="specify wallet name instead of using the defaiult parser name")
+    parser.add_argument('--spouse',
+                        type=str,
+                        default='',
+                        help="regex (case insensitive) to match Gift-Spouse transactions for parsers that are aware of this, e.g. for Crypto.com use the spouse's last 10 digits of their phone number")
 
     config.args = parser.parse_args()
+    config.args.spouse = re.compile(config.args.spouse, re.I) if config.args.spouse else None
 
     if config.args.debug:
         sys.stderr.write("%s%s v%s\n" % (Fore.YELLOW, parser.prog, __version__))
