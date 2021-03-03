@@ -175,7 +175,7 @@ def main():
                   tax.holdings_report)
 
 def is_gift_dupe(tx1: TransactionRecord, tx2: TransactionRecord):
-    return tx1.timestamp == tx2.timestamp and (
+    return tx1.timestamp == tx2.timestamp and ( #tx1.wallet == tx2.wallet and (
             (  # received
                 (tx1.t_type == TransactionRecord.TYPE_GIFT_RECEIVED and tx2.t_type == TransactionRecord.TYPE_DEPOSIT
                  or tx2.t_type == TransactionRecord.TYPE_GIFT_RECEIVED and tx1.t_type == TransactionRecord.TYPE_DEPOSIT)
@@ -197,9 +197,14 @@ def remove_gift_dupes(txs):
     indices = []
     for i in range(1, len(txs)):
         if is_gift_dupe(txs[i-1], txs[i]):
-            indices.insert(0, i-1)
-    for i in indices:
-        del txs[i]
+            # make sure we don't remove gifts but withdrawal/deposits
+            indices.append(i if txs[i].t_type in (TransactionRecord.TYPE_WITHDRAWAL, TransactionRecord.TYPE_DEPOSIT) else i-1)
+            # indices.append(i-1)
+    if len(indices) > 0:
+        indices.sort(reverse=True)
+        for i in indices:
+            del txs[i]
+        print("%sWARNING%s Removed %d transfers detected as duplicates of gifts. Use --allowgiftdupes to disable this." % (Back.YELLOW + Fore.BLACK, Back.RESET + Fore.YELLOW, len(indices)))
     return txs
 
 def validate_year(value):
