@@ -12,18 +12,24 @@
 I'm adding functionality to [BittyTax](https://github.com/BittyTax/BittyTax) that I need or find useful, (some) which may make it into the upstream code as well. I attempt to keep this fork updated with latest changes from upstream. 
 
 Usage is at one own's risk. Additions/changes:
-- more/fixed parsers (Celsius, Crypto.com, Kucoin, etc - see commits)
-- more options (config and/or command-line):
-  - specify tax year start date (applies to businesses)
-  - specify BnB duration (applies to businsses)
-  - ignore wallet names (treat as one big wallet, useful when debugging)
-  - hide detailed price rows (useful when debugging)
-  - hide detailed transaction rows (useful when debugging)
+- more/fixed parsers for the conv tool (Celsius, Crypto.com, Kucoin, Coinomi, Nexo, Changelly, etc - see commits)
+    - allow specifying a fee percentage if the exchange export doesn't include fees (Kucoin)
+    - allow specifying a search string to match spouse gifts automatically (Crypto.com) 
+- more options available to enable/disable (config and/or command-line):
+    - filter by wallet (include/exclude wallets for parsing)
+    - filter by note (use the note field to tag transactions and include/exclude in the tool instead of deleting/adding in the spreadsheet)
+    - specify tax year start date (applies to businesses)
+    - specify BnB duration (applies to businsses)
+    - ignore wallet names (treat as one big wallet)
+    - ignore duplicate transfers if gifts (to/from spouse/charity/other) are detected
+    - hide detailed price rows (useful when debugging)
+    - hide detailed transaction rows (useful when debugging)
 - allow negative amounts for buy (can deal with refunds/reverted transactions)
 - address TGBP price issues
 - deal with renamed tokens (conf option)
 - subtotals per asset in reports (helps debugging)
 - ability to specify multiple files or wildcards for the main and conv tools (e.g. `bittytax *.xlsx screwed/*.csv`)
+- ability to comment rows instead of having to delete them (use `//` or `#` or `!` in the Type field)
 - remove string storage in Excel (15 decimals is enough for me and is a pain to fix in Excel; Excel truncates anyway)
 - restyled Excel output (smaller font, etc - personal preference)
 
