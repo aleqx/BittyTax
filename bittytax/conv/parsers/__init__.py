@@ -5,6 +5,7 @@ from . import bitstamp
 from . import bittrex
 from . import celsius
 from . import cgtcalculator
+from . import changelly
 from . import changetip
 from . import circle
 from . import coinbase
