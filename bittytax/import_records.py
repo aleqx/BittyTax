@@ -26,10 +26,11 @@ class ImportRecords(object):
 
     @staticmethod
     def is_row_excluded(row):
-        return row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0 \
-                or config.args.wallets_re and row[10] and not re.search(config.args.wallets_re, row[10]) \
-                or config.args.note_exclude_re and row[12] and re.search(config.args.note_exclude_re, row[12]) \
-                or config.args.note_include_re and row[12] and not re.search(config.args.note_include_re, row[12])
+        return row[0] and row[0][0] in ('/', '#', '!') \
+            or row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0 \
+            or config.args.wallets_re and row[10] and not re.search(config.args.wallets_re, row[10]) \
+            or config.args.note_exclude_re and row[12] and re.search(config.args.note_exclude_re, row[12]) \
+            or config.args.note_include_re and row[12] and not re.search(config.args.note_include_re, row[12])
 
     def import_excel(self, filename):
         workbook = xlrd.open_workbook(filename)
