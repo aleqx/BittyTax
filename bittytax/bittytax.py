@@ -195,11 +195,15 @@ def is_gift_dupe(tx1: TransactionRecord, tx2: TransactionRecord):
 
 def remove_gift_dupes(txs):
     indices = []
-    for i in range(1, len(txs)):
-        if is_gift_dupe(txs[i-1], txs[i]):
-            # make sure we don't remove gifts but withdrawal/deposits
-            indices.append(i if txs[i].t_type in (TransactionRecord.TYPE_WITHDRAWAL, TransactionRecord.TYPE_DEPOSIT) else i-1)
-            # indices.append(i-1)
+    # check and make sure we don't remove gifts but withdrawal/deposits
+    for i in range(0, len(txs)-1):
+        for j in range(i+1, len(txs)):
+            if txs[i].timestamp == txs[j].timestamp:  # lookahead as long as timestamps are the same
+                if is_gift_dupe(txs[i], txs[j]):
+                    indices.append(i if txs[i].t_type in (TransactionRecord.TYPE_WITHDRAWAL, TransactionRecord.TYPE_DEPOSIT) else j)
+            else:
+                break
+    indices = list(set(indices))
     if len(indices) > 0:
         indices.sort(reverse=True)
         for i in indices:
