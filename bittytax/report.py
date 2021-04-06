@@ -195,9 +195,9 @@ class ReportLog(object):
                         Fore.RED if te.gain < 0 else Fore.WHITE,
                         self.format_value(te.gain)))
 
-            asset_header = asset if config.args.notx else 'Total'
+            asset_header = asset if config.args.notx else 'Subtotal'
 
-            if disposals > 1:
+            if disposals > 0:
                 print("%s%s  %-10s  %-28s  %25s  %13s  %13s  %13s  %s%13s" % (
                     Fore.YELLOW,
                     asset_header.ljust(self.MAX_SYMBOL_LEN),
@@ -289,12 +289,12 @@ class ReportLog(object):
         header_date, header_income = ('', '') if config.args.notx else ('Date', 'Income Type')
 
         header = "%s  %-10s  %-11s  %-40s %-25s %13s %13s" % ('Asset'.ljust(self.MAX_SYMBOL_LEN),
-                                                           header_date,
-                                                           header_income,
-                                                           'Description',
-                                                           'Quantity',
-                                                           'Amount',
-                                                           'Fees')
+                                                              header_date,
+                                                              header_income,
+                                                              'Description',
+                                                              'Quantity',
+                                                              'Amount',
+                                                              'Fees')
         if config.args.notx:
             print("%s%s" % (Fore.YELLOW, header))
         for asset in sorted(income.assets):
@@ -317,9 +317,9 @@ class ReportLog(object):
                         self.format_value(te.amount),
                         self.format_value(te.fees)))
 
-            asset_header = asset if config.args.notx else 'Total'
+            asset_header = asset if config.args.notx else 'Subtotal'
 
-            if events > 1:
+            if events > 0:
                 print("%s%s  %-10s  %-11s  %-40s %-25s %13s %13s" % (
                     Fore.YELLOW,
                     asset_header.ljust(self.MAX_SYMBOL_LEN),
