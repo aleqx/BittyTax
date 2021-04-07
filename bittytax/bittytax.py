@@ -89,26 +89,11 @@ def main():
                         type=validate_bnb,
                         help="bed and breakfast duration must be at least 1 (default %d)" % (
                             config.bed_and_breakfast_days))
-    parser.add_argument('--wallets', '--wallet',
-                        dest='wallets_re',
-                        type=str,
-                        default='',
-                        help="regex case insensitive, consider only transactions belonging to specified wallet(s)")
     parser.add_argument('--transfers',
                         dest="transfers_include",
                         type=int,
                         default=int(config.transfers_include),
                         help="1=consider transfers, 0=ignore transfers from tax calculation only, -1=ignore transfers entirely")
-    parser.add_argument('--noteinclude',
-                        dest="note_include_re",
-                        type=str,
-                        default='',
-                        help="regex case insensitive, include only rows whose Note field matches")
-    parser.add_argument('--noteexclude',
-                        dest="note_exclude_re",
-                        type=str,
-                        default='',
-                        help="regex case insensitive, exclude rows whose Note field matches (can be used in conjunction with --noteinclude)")
     parser.add_argument('--export',
                         action='store_true',
                         help="export your transaction records populated with price data")
@@ -118,12 +103,19 @@ def main():
     parser.add_argument('--allowgiftdupes',
                         action='store_true',
                         help="ignore duplicates between gifts and deposits/withdrawals")
+    parser.add_argument('--filterinclude',
+                        dest="include_filters",
+                        type=validate_field_filter,
+                        default=[],
+                        help="syntax FIELD=REGEX[,...] (case insensitive), include only rows whose FIELD value matches, e.g. Note=^missus; commas in FIELD or REGEX must be escaped, i.e. \\,.")
+    parser.add_argument('--filterexclude',
+                        dest="exclude_filters",
+                        type=validate_field_filter,
+                        default=[],
+                        help="same as --include, but instead exclude rows whose FIELD value matches (can be used in conjunction with --include)")
 
     config.args = parser.parse_args()
     config.args.nocache = False
-    config.args.wallets_re = re.compile(config.args.wallets_re, re.I) if config.args.wallets_re else None
-    config.args.note_include_re = re.compile(config.args.note_include_re, re.I) if config.args.note_exclude_re else None
-    config.args.note_exclude_re = re.compile(config.args.note_exclude_re, re.I) if config.args.note_exclude_re else None
     config.transfers_include = config.args.transfers_include > 0
 
     if config.args.debug:
@@ -177,17 +169,23 @@ def main():
 def is_gift_dupe(tx1: TransactionRecord, tx2: TransactionRecord):
     return tx1.timestamp == tx2.timestamp and ( #tx1.wallet == tx2.wallet and (
             (  # received
-                (tx1.t_type == TransactionRecord.TYPE_GIFT_RECEIVED and tx2.t_type == TransactionRecord.TYPE_DEPOSIT
-                 or tx2.t_type == TransactionRecord.TYPE_GIFT_RECEIVED and tx1.t_type == TransactionRecord.TYPE_DEPOSIT)
+                (tx1.t_type in (TransactionRecord.TYPE_GIFT_RECEIVED,
+                                TransactionRecord.TYPE_MINING,
+                                TransactionRecord.TYPE_INTEREST,
+                                TransactionRecord.TYPE_INCOME) and tx2.t_type == TransactionRecord.TYPE_DEPOSIT
+                 or tx2.t_type in (TransactionRecord.TYPE_GIFT_RECEIVED,
+                                   TransactionRecord.TYPE_MINING,
+                                   TransactionRecord.TYPE_INTEREST,
+                                   TransactionRecord.TYPE_INCOME) and tx1.t_type == TransactionRecord.TYPE_DEPOSIT)
                 and tx1.buy.asset == tx2.buy.asset
                 and abs(tx1.buy.quantity - tx2.buy.quantity) <= 0.00000001
             ) or (  # sent
-                (tx1.t_type == TransactionRecord.TYPE_GIFT_SPOUSE and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
-                 or tx2.t_type == TransactionRecord.TYPE_GIFT_SPOUSE and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL
-                 or tx1.t_type == TransactionRecord.TYPE_GIFT_SENT and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
-                 or tx2.t_type == TransactionRecord.TYPE_GIFT_SENT and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL
-                 or tx1.t_type == TransactionRecord.TYPE_CHARITY_SENT and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
-                 or tx2.t_type == TransactionRecord.TYPE_CHARITY_SENT and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL)
+                (tx1.t_type in (TransactionRecord.TYPE_GIFT_SPOUSE,
+                                TransactionRecord.TYPE_GIFT_SENT,
+                                TransactionRecord.TYPE_CHARITY_SENT) and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
+                 or tx2.t_type in (TransactionRecord.TYPE_GIFT_SPOUSE,
+                                   TransactionRecord.TYPE_GIFT_SENT,
+                                   TransactionRecord.TYPE_CHARITY_SENT) and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL)
                 and tx1.sell.asset == tx2.sell.asset
                 and abs(tx1.sell.quantity - tx2.sell.quantity) <= 0.00000001
             )
@@ -210,6 +208,21 @@ def remove_gift_dupes(txs):
             del txs[i]
         print("%sWARNING%s Removed %d transfers detected as duplicates of gifts. Use --allowgiftdupes to disable this." % (Back.YELLOW + Fore.BLACK, Back.RESET + Fore.YELLOW, len(indices)))
     return txs
+
+def validate_field_filter(value):
+    try:
+        filters = []
+        for filt in re.split(r'(?<!\\),\s*', value):
+            field, restr = filt.replace('\\,', ',').split('=', 1)
+            filters.append({
+                'field': int(field) if re.match(r'\d+', field) else field.lower(),
+                'column': -1,
+                're': re.compile(restr, re.I),
+                'findcolumn': lambda header, field: field if isinstance(field, int) else [e.lower() for e in header].index(field)
+            })
+        return filters
+    except ValueError:
+        raise argparse.ArgumentTypeError("malformed FIELD=REGEXP[,...] string: %s" % value)
 
 def validate_year(value):
     year = int(value)

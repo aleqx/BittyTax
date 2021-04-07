@@ -58,6 +58,7 @@ class Config(object):
         'data_source_crypto': DATA_SOURCE_CRYPTO,
         'tax_year_start_day': TAX_YEAR_START_DAY,
         'tax_year_start_month': TAX_YEAR_START_MONTH,
+        'tax_year_first_year': None,
         'bed_and_breakfast_days': BED_AND_BREAKFAST_DAYS,
         'ignore_wallet_names': False,
         'gbp_stablecoin_list': GBP_STABLECOIN_LIST,

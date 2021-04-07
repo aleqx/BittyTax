@@ -26,11 +26,15 @@ class ImportRecords(object):
 
     @staticmethod
     def is_row_excluded(row):
-        return row[0] and row[0][0] in ('/', '#', '!') \
-            or row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0 \
-            or config.args.wallets_re and row[10] and not re.search(config.args.wallets_re, row[10]) \
-            or config.args.note_exclude_re and row[12] and re.search(config.args.note_exclude_re, row[12]) \
-            or config.args.note_include_re and row[12] and not re.search(config.args.note_include_re, row[12])
+        if row[0] and row[0][0] in ('/', '#', '!') or row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0:
+            return True
+        for exc in config.args.exclude_filters:
+            if exc['column'] >= 0 and exc['re'].search(row[exc['column']]):
+                return True
+        for inc in config.args.include_filters:
+            if inc['column'] >= 0 and not inc['re'].search(row[inc['column']]):
+                return True
+        return False
 
     def import_excel(self, filename):
         workbook = xlrd.open_workbook(filename)
@@ -45,12 +49,23 @@ class ImportRecords(object):
                                   desc="%simporting '%s' rows%s" % (
                                       Fore.CYAN, worksheet.name, Fore.GREEN),
                                   disable=bool(config.args.debug or not sys.stdout.isatty())):
-                if row_num == 0:
-                    # skip headers
-                    continue
 
                 row = [self.convert_cell(worksheet.cell(row_num, cell_num), workbook)
                        for cell_num in range(0, worksheet.ncols)]
+
+                if row_num == 0:
+                    try:
+                        for filt in config.args.include_filters:
+                            filt['column'] = filt['findcolumn'](row, filt['field'])
+                    except ValueError:
+                        tqdm.write("%simport: skipping worksheet '%s' (field '%s' not found)" % (Fore.YELLOW, worksheet.name, filt['field']))
+                        break  # skip entire workbook if 'include' field is not found int he header
+                    for filt in config.args.exclude_filters:
+                        try:
+                            filt['column'] = filt['findcolumn'](row, filt['field'])
+                        except ValueError:
+                            filt['column'] = -1
+                    continue
 
                 if self.is_row_excluded(row):
                     continue

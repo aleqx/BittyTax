@@ -16,7 +16,12 @@ from .holdings import Holdings
 PRECISION = Decimal('0.00')
 
 def which_tax_year(timestamp):
-    if timestamp >= datetime(timestamp.year, config.tax_year_start_month, config.tax_year_start_day, tzinfo=config.TZ_LOCAL):
+    if config.tax_year_first_year > 0 and timestamp < datetime(config.tax_year_first_year,
+                                                               config.tax_year_start_month,
+                                                               config.tax_year_start_day,
+                                                               tzinfo=config.TZ_LOCAL):
+        tax_year = config.tax_year_first_year
+    elif timestamp >= datetime(timestamp.year, config.tax_year_start_month, config.tax_year_start_day, tzinfo=config.TZ_LOCAL):
         tax_year = timestamp.year + 1
     else:
         tax_year = timestamp.year

@@ -12,14 +12,14 @@
 I'm adding functionality to [BittyTax](https://github.com/BittyTax/BittyTax) that I need or find useful, (some) which may make it into the upstream code as well. I attempt to keep this fork updated with latest changes from upstream. 
 
 Usage is at one own's risk. Additions/changes:
-- more/fixed parsers for the conv tool (Celsius, Crypto.com, Kucoin, Coinomi, Nexo, Changelly, etc - see commits)
+- more/fixed parsers for the conv tool (Celsius, Crypto.com, Kucoin, Coinomi, Nexo, Changelly, Tradeogre, etc - see conv/parsers/*.py files)
     - allow specifying a fee percentage if the exchange export doesn't include fees (Kucoin)
     - allow specifying a search string to match spouse gifts automatically (Crypto.com) 
 - more options available to enable/disable (config and/or command-line):
-    - filter by wallet (include/exclude wallets for parsing)
-    - filter by note (use the note field to tag transactions and include/exclude in the tool instead of deleting/adding in the spreadsheet)
+    - (regex) filters by ANY column: include only or exclude rows matching any criteria, any number of filters supported (this even allows joint-account treatment)
     - specify tax year start date (applies to businesses)
     - specify BnB duration (applies to businsses)
+    - specify first year duration (applies to businesses)  
     - ignore wallet names (treat as one big wallet)
     - ignore duplicate transfers if gifts (to/from spouse/charity/other) are detected
     - hide detailed price rows (useful when debugging)
