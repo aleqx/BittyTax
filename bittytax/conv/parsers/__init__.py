@@ -1,5 +1,6 @@
 from . import binance
 from . import barclays
+from . import bgogo
 from . import bitfinex
 from . import bitstamp
 from . import bittrex
@@ -36,6 +37,7 @@ from . import okex
 from . import poloniex
 from . import qtwallet
 from . import stex
+from . import tradeogre
 from . import tradesatoshi
 from . import trezor
 from . import uphold
