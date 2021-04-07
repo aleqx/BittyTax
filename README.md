@@ -25,7 +25,7 @@ Usage is at one own's risk. Additions/changes:
     - hide detailed price rows (useful when debugging)
     - hide detailed transaction rows (useful when debugging)
 - allow negative amounts for buy (can deal with refunds/reverted transactions)
-- address TGBP price issues
+- address TGBP price issues (this is important! there are big variations otherwise)
 - deal with renamed tokens (conf option)
 - subtotals per asset in reports (helps debugging)
 - ability to specify multiple files or wildcards for the main and conv tools (e.g. `bittytax *.xlsx screwed/*.csv`)
@@ -38,6 +38,7 @@ bittytax.conf additions:
 # day and month for your financial start of year
 tax_year_start_day: 6
 tax_year_start_month: 4
+#tax_year_first_year: 2018
 
 # bed and breakfast rule duration in days
 bed_and_breakfast_days: 30
