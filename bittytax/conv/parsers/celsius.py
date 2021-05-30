@@ -24,6 +24,9 @@ from ..exceptions import UnexpectedTypeError
 WALLET = "Celsius"
 
 def parse_celsius(data_row, parser, _filename):
+    if config.args.wallet:
+        WALLET = config.args.wallet
+
     in_row = data_row.in_row
 
     if in_row[8] != "Yes" and not config.args.unconfirmed:
