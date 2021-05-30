@@ -132,9 +132,9 @@ class OutputCsv(OutputBase):
     @staticmethod
     def _format_timestamp(timestamp):
         if timestamp.microsecond:
-            return timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f %Z')
+            return timestamp.strftime(config.TZ_FORMAT_MILLISEC)
         else:
-            return timestamp.strftime('%Y-%m-%dT%H:%M:%S %Z')
+            return timestamp.strftime(config.TZ_FORMAT)
 
     @staticmethod
     def _to_bittytax_csv(tr):
