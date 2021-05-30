@@ -23,45 +23,63 @@ from ..exceptions import DataParserError, UnexpectedTypeError
 WALLET = "Crypto.com"
 
 def parse_crypto_com_all(data_rows, parser, _filename):
-    # order chronologically
+    # order chronologically first (this helps!)
     data_rows.sort(key=lambda row: row.in_row[0])
+    # init buffers
     debited_rows = []
-    credited_row = {}
+    credited_row = None
     # Swaps and dust conversions span multiple "debited" and "credited" rows;
     # there are multiple "debited" rows in a dust conversion; the order of
-    # debited/credited can be arbitrary; hence we gobble till we hit non-swap rows.
-    for data_row in data_rows:
+    # debited/credited can be arbitrary; hence we gobble till we hit non-swap rows or end of rows
+    is_dust_credited = lambda field: field in ("dust_conversion_credited", "crypto_wallet_swap_credited",
+                                               "lockup_swap_credited", "interest_swap_credited")
+    is_dust_debited = lambda field: field in ("dust_conversion_debited", "crypto_wallet_swap_debited",
+                                              "lockup_swap_debited", "interest_swap_debited")
+    for i in range(len(data_rows)):
+        data_row = data_rows[i]
         try:
             in_row = data_row.in_row
             # parse time here, not in the handler parse_crypto_com() since we
             # must skip/ignore rows here as well, and the time needs to be parsed for those too
             data_row.timestamp = DataParser.parse_timestamp(in_row[0])
-            if in_row[9] in ("dust_conversion_credited", "crypto_wallet_swap_credited",
-                             "lockup_swap_credited", "interest_swap_credited"):
+            if is_dust_credited(in_row[9]):  # we hit a dust credit row (there is only one of these)
                 credited_row = data_row
-                continue
-            elif in_row[9] in ("dust_conversion_debited", "crypto_wallet_swap_debited",
-                               "lockup_swap_debited", "interest_swap_debited"):
+                # lookahead to see if next row is non-dust or end of rows
+                if len(debited_rows) and (i + 1 == len(data_rows) or not is_dust_debited(data_rows[i+1].in_row[9])):
+                    parse_crypto_com_dust(credited_row, debited_rows, parser, _filename)
+                    debited_rows = []
+                    credited_row = None
+            elif is_dust_debited(in_row[9]):  # we hit a dust debit row (there can be multiple of these)
                 debited_rows.append(data_row)
-                continue
-            elif len(debited_rows) == 0 or not credited_row:
-                parse_crypto_com(data_row, parser, _filename)
-            else:  # hit a non-swap row after a sequence of swap rows
-                total_debited_native = reduce(lambda x, y: x + y, [Decimal(data_row.in_row[7]) for data_row in debited_rows])
-                for debited_row in debited_rows:
-                    debited_row.in_row[4] = credited_row.in_row[2]
-                    debited_row.in_row[5] = str(Decimal(credited_row.in_row[3]) * Decimal(debited_row.in_row[7]) / total_debited_native) \
-                        if total_debited_native > 0 else str(Decimal(credited_row.in_row[3]) / len(debited_rows))
-                    debited_row.in_row[9] = debited_row.in_row[9].replace('_debited', '')  # rename type
-                    parse_crypto_com(debited_row, parser, _filename)
-                debited_rows = []
-                credited_row = {}
-                # parse the non-swap row too
+                # lookahead to see if next row is non-dust or end of rows
+                if credited_row and (i + 1 == len(data_rows) or not is_dust_debited(data_rows[i+1].in_row[9]) and not is_dust_credited(data_rows[i+1].in_row[9])):
+                    parse_crypto_com_dust(credited_row, debited_rows, parser, _filename)
+                    debited_rows = []
+                    credited_row = None
+            else:  # hit a non-dust row, parse normally
                 parse_crypto_com(data_row, parser, _filename)
 
         except DataParserError as e:
             data_row.failure = e
 
+def parse_crypto_com_dust(credited_row, debited_rows, parser, _filename):
+    # use the USD native column to determine proportions, as it has 9 decimals (avoid large errors), except when it's <0.01
+    total_debited_native_usd = reduce(lambda x, y: x + y, [Decimal(data_row.in_row[8]) for data_row in debited_rows])
+    # create separate trade transactions with proportional credit amounts (computed from the native-USD column)
+    # NOTE: small annoyance in that Crypto.com slaps a fat 0 if the USD amount
+    #       is <0.01, despite that possibly giving a >0.1 CRO amount, so the
+    #       total CRO over the multiple dust txs in a multi dust conversion may be
+    #       slightly lower than the original total CRO credited; <rant>What's the point
+    #       in using 8 decimals for 'USD native amount' if you use 0 for <0.01 USD.</rant>
+    #       It's possible to fix this here if there is a single 0 but not when there are
+    #       more. I'm not going to bother as the error is on the order of ~0.01 USD and
+    #       HMRC rounds to nearest GBP anyway.
+    for debited_row in debited_rows:
+        debited_row.in_row[4] = credited_row.in_row[2]
+        debited_row.in_row[5] = str(Decimal(credited_row.in_row[3]) * Decimal(debited_row.in_row[8]) / total_debited_native_usd) \
+            if total_debited_native_usd < 0 else str(Decimal(credited_row.in_row[3]) / len(debited_rows))
+        debited_row.in_row[9] = debited_row.in_row[9].replace('_debited', '')  # rename type
+        parse_crypto_com(debited_row, parser, _filename)  # pass to the core parser function
 
 def parse_crypto_com(data_row, parser, _filename):
     in_row = data_row.in_row
