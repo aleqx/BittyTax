@@ -28,10 +28,10 @@ class AuditRecords(object):
                 self._add_tokens(tr.wallet, tr.buy.asset, tr.buy.quantity)
 
             if tr.sell:
-                self._subtract_tokens(tr.wallet, tr.sell.asset, tr.sell.quantity)
+                self._subtract_tokens(tr.wallet, tr.sell.asset, tr.sell.quantity, tr)
 
             if tr.fee:
-                self._subtract_tokens(tr.wallet, tr.fee.asset, tr.fee.quantity)
+                self._subtract_tokens(tr.wallet, tr.fee.asset, tr.fee.quantity, tr)
 
         if config.args.debug:
             print("%saudit: final balances by wallet" % Fore.CYAN)
@@ -76,7 +76,7 @@ class AuditRecords(object):
                 '{:0,f}'.format(self.wallets[wallet][asset].normalize()),
                 '{:0,f}'.format(quantity.normalize())))
 
-    def _subtract_tokens(self, wallet, asset, quantity):
+    def _subtract_tokens(self, wallet, asset, quantity, tr=None):
         if wallet not in self.wallets:
             self.wallets[wallet] = {}
 
@@ -99,9 +99,10 @@ class AuditRecords(object):
                 '{:0,f}'.format(quantity.normalize())))
 
         if self.wallets[wallet][asset] < 0 and asset not in config.fiat_list and not config.args.noauditwarning:
-            tqdm.write("%sWARNING%s Balance at %s:%s is negative %s" % (
-                Back.YELLOW+Fore.BLACK, Back.RESET+Fore.YELLOW,
-                wallet, asset, '{:0,f}'.format(self.wallets[wallet][asset].normalize())))
+            tqdm.write("%sWARNING%s Balance at %s:%4s is negative %14s, %s" % (
+                Back.YELLOW + Fore.BLACK, Back.RESET + Fore.YELLOW,
+                wallet, asset, '{:0,f}'.format(self.wallets[wallet][asset].normalize()),
+                tr.to_csv()))
 
     def compare_pools(self, holdings):
         passed = True
