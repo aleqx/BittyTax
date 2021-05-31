@@ -19,6 +19,10 @@ class Config(object):
                 'GMT': dateutil.tz.gettz('Europe/London')}
     TZ_LOCAL = dateutil.tz.gettz('Europe/London')
     TZ_UTC = dateutil.tz.UTC
+    # TZ_FORMAT = '%Y-%m-%dT%H:%M:%S %Z'
+    # TZ_FORMAT_MILLISEC = '%Y-%m-%dT%H:%M:%S.%f %Z'
+    TZ_FORMAT = '%Y-%m-%d %H:%M:%S'
+    TZ_FORMAT_MILLISEC = '%Y-%m-%d %H:%M:%S'
     CCY = 'GBP'
 
     BITTYTAX_PATH = os.path.expanduser('~/.bittytax')
@@ -27,7 +31,7 @@ class Config(object):
 
     FIAT_LIST = ['GBP', 'EUR', 'USD']
     CRYPTO_LIST = ['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'USDT']
-    GBP_STABLECOIN_LIST = ['TGBP']
+    FORCE_FIAT_LIST = {'TGBP': 'GBP', 'GBPX': 'GBP'}
     RENAMED_ASSET_LIST = {'LOKI': 'OXEN', 'XZC': 'FIRO'}
 
     FORMAT_CSV = 'CSV'
@@ -42,8 +46,9 @@ class Config(object):
     TRADE_ALLOWABLE_COST_SELL = 1
     TRADE_ALLOWABLE_COST_SPLIT = 2
 
-    DATA_SOURCE_FIAT = ['ExchangeRatesAPI', 'RatesAPI']
+    DATA_SOURCE_FIAT = ['Frankfurter']
     DATA_SOURCE_CRYPTO = ['CryptoCompare', 'CoinGecko']
+    DATA_SOURCE_TIME = 'close'  # open,high,low,close; TODO: avg
 
     DEFAULT_CONFIG = {
         'fiat_list': FIAT_LIST,
@@ -56,12 +61,13 @@ class Config(object):
         'data_source_select': {},
         'data_source_fiat': DATA_SOURCE_FIAT,
         'data_source_crypto': DATA_SOURCE_CRYPTO,
+        'data_source_time': DATA_SOURCE_TIME,
         'tax_year_start_day': TAX_YEAR_START_DAY,
         'tax_year_start_month': TAX_YEAR_START_MONTH,
         'tax_year_first_year': None,
         'bed_and_breakfast_days': BED_AND_BREAKFAST_DAYS,
         'ignore_wallet_names': False,
-        'gbp_stablecoin_list': GBP_STABLECOIN_LIST,
+        'force_fiat_list': FORCE_FIAT_LIST,
         'renamed_asset_list': RENAMED_ASSET_LIST,
         'coinbase_zero_fees_are_gifts': False,
     }

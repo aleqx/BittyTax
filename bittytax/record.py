@@ -60,6 +60,7 @@ class TransactionRecord(object):
             self.fee.wallet = self.wallet
             self.fee.note = self.note
 
+
     def set_tid(self):
         if self.tid is None:
             TransactionRecord.cnt += 1
@@ -100,8 +101,8 @@ class TransactionRecord(object):
     @staticmethod
     def _format_timestamp(timestamp):
         if timestamp.microsecond:
-            return timestamp.strftime('%Y-%m-%dT%H:%M:%S.%f %Z')
-        return timestamp.strftime('%Y-%m-%dT%H:%M:%S %Z')
+            return timestamp.strftime(config.TZ_FORMAT_MILLISEC)
+        return timestamp.strftime(config.TZ_FORMAT)
 
     @staticmethod
     def _format_decimal(decimal):
