@@ -25,16 +25,30 @@ class ImportRecords(object):
         self.failure_cnt = 0
 
     @staticmethod
-    def is_row_excluded(row):
-        if row[0] and row[0][0] in ('/', '#', '!') or row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0:
-            return True
-        for exc in config.args.exclude_filters:
-            if exc['column'] >= 0 and exc['re'].search(row[exc['column']]):
-                return True
-        for inc in config.args.include_filters:
-            if inc['column'] >= 0 and not inc['re'].search(row[inc['column']]):
-                return True
-        return False
+    def parse_header_row(row, worksheet=None):
+        try:
+            jt = config.args.joint
+            if jt:
+                jt['column'] = jt['findcolumn'](row, jt['field'])
+            # for jt in config.args.joint['members']:
+            #     jt['column'] = jt['findcolumn'](row, jt['field'])
+        except ValueError:
+            s, w = ['', worksheet] if isinstance(worksheet, str) else [' worksheet', worksheet.name]
+            tqdm.write("%simport: skipping%s '%s' (joint account column '%s' not found)" % (Fore.YELLOW, s, w, jt['field']))
+            return False  # skip entire workbook if 'include' field is not found int he header
+        try:
+            for filt in config.args.include_filters:
+                filt['column'] = filt['findcolumn'](row, filt['field'])
+        except ValueError:
+            s, w = ['', worksheet] if isinstance(worksheet, str) else [' worksheet', worksheet.name]
+            tqdm.write("%simport: skipping%s '%s' (field '%s' not found)" % (Fore.YELLOW, s, w, filt['field']))
+            return False  # skip entire workbook if 'include' field is not found int he header
+        for filt in config.args.exclude_filters:
+            try:
+                filt['column'] = filt['findcolumn'](row, filt['field'])
+            except ValueError:
+                filt['column'] = -1
+        return True
 
     def import_excel(self, filename):
         workbook = xlrd.open_workbook(filename)
@@ -54,23 +68,17 @@ class ImportRecords(object):
                        for cell_num in range(0, worksheet.ncols)]
 
                 if row_num == 0:
-                    try:
-                        for filt in config.args.include_filters:
-                            filt['column'] = filt['findcolumn'](row, filt['field'])
-                    except ValueError:
-                        tqdm.write("%simport: skipping worksheet '%s' (field '%s' not found)" % (Fore.YELLOW, worksheet.name, filt['field']))
-                        break  # skip entire workbook if 'include' field is not found int he header
-                    for filt in config.args.exclude_filters:
-                        try:
-                            filt['column'] = filt['findcolumn'](row, filt['field'])
-                        except ValueError:
-                            filt['column'] = -1
+                    if self.parse_header_row(row, worksheet):
+                        continue
+                    else:
+                        break
+
+                joint_weight = TransactionRow.validate_joint_weight(row)
+
+                if joint_weight == 0 or TransactionRow.is_row_excluded(row):
                     continue
 
-                if self.is_row_excluded(row):
-                    continue
-
-                t_row = TransactionRow(row[:len(TransactionRow.HEADER)], row_num+1, worksheet.name)
+                t_row = TransactionRow(row[:len(TransactionRow.HEADER)], row_num+1, worksheet.name, joint_weight)
                 try:
                     t_row.parse()
                 except TransactionParserError as e:
@@ -124,8 +132,8 @@ class ImportRecords(object):
                         desc="%simporting%s" % (Fore.CYAN, Fore.GREEN),
                         disable=bool(config.args.debug or not sys.stdout.isatty())):
             if reader.line_num == 1:
-                # skip headers
-                continue
+                if self.parse_header_row(row, import_file.name):
+                    continue
 
             if self.is_row_excluded(row):
                 continue
@@ -195,12 +203,13 @@ class TransactionRow(object):
 
     cnt = 0
 
-    def __init__(self, row, row_num, worksheet_name=None):
+    def __init__(self, row, row_num, worksheet_name=None, joint_weight=1):
         self.row = row
         self.row_num = row_num
         self.worksheet_name = worksheet_name
         self.t_record = None
         self.failure = None
+        self.joint_weight = joint_weight
 
     def parse(self):
         if all(not self.row[i] for i in range(len(self.row))):
@@ -227,20 +236,14 @@ class TransactionRow(object):
             raise UnexpectedTransactionTypeError(0, self.HEADER[0], t_type)
 
         if buy_asset:
-            if buy_asset in config.gbp_stablecoin_list and not buy_value:  # TGBP workaround
-                buy_value = buy_quantity
             if buy_asset in config.renamed_asset_list:
                 buy_asset = config.renamed_asset_list[buy_asset]
             buy = Buy(t_type, buy_quantity, buy_asset, buy_value)
         if sell_asset:
-            if sell_asset in config.gbp_stablecoin_list and not sell_value:  # TGBP workaround
-                sell_value = sell_quantity
             if sell_asset in config.renamed_asset_list:
                 sell_asset = config.renamed_asset_list[sell_asset]
             sell = Sell(t_type, sell_quantity, sell_asset, sell_value)
         if fee_asset:
-            if fee_asset in config.gbp_stablecoin_list and not fee_value:  # TGBP workaround
-                fee_value = fee_quantity
             if fee_asset in config.renamed_asset_list:
                 fee_asset = config.renamed_asset_list[fee_asset]
             # Fees are added as a separate spend transaction
@@ -261,8 +264,23 @@ class TransactionRow(object):
         else:
             note = ''
 
+        if self.joint_weight < 1:
+            if fee:
+                fee.quantity *= self.joint_weight
+                if fee.proceeds:
+                    fee.proceeds *= self.joint_weight
+            if sell:
+                sell.quantity *= self.joint_weight
+                if sell.proceeds:
+                    sell.proceeds *= self.joint_weight
+            if buy:
+                buy.quantity *= self.joint_weight
+                if buy.cost:
+                    buy.cost *= self.joint_weight
+
         self.t_record = TransactionRecord(t_type, buy, sell, fee, self.row[10],
                                           self.parse_timestamp(self.row[11]), note)
+
 
     @staticmethod
     def parse_timestamp(timestamp_str):
@@ -405,6 +423,39 @@ class TransactionRow(object):
             raise MissingDataError(7, TransactionRow.HEADER[7])
 
         return fee_quantity, fee_asset, fee_value
+
+    @staticmethod
+    def validate_joint_weight(row):
+        jt = config.args.joint
+        if jt:
+            if jt['column'] > 0:
+                value = row[jt['column']]
+                if value:
+                    try:
+                        weight = Decimal(value)
+                    except:
+                        raise DataValueError(jt['column'], jt['field'], value)
+                    if 0 > weight > 1:
+                        raise DataValueError(jt['column'], jt['field'], weight)
+                else:
+                    weight = 0
+            else:
+                weight = 0
+        else:
+            weight = 1
+        return weight
+
+    @staticmethod
+    def is_row_excluded(row):
+        if row[0] and row[0][0] in ('/', '#', '!') or row[0] in ('Deposit', 'Withdrawal') and config.args.transfers_include < 0:
+            return True
+        for exc in config.args.exclude_filters:
+            if exc['column'] >= 0 and exc['re'].search(row[exc['column']]):
+                return True
+        for inc in config.args.include_filters:
+            if inc['column'] >= 0 and not inc['re'].search(row[inc['column']]):
+                return True
+        return False
 
     @staticmethod
     def strip_non_digits(string):

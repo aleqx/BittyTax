@@ -113,6 +113,11 @@ def main():
                         type=validate_field_filter,
                         default=[],
                         help="same as --include, but instead exclude rows whose FIELD value matches (can be used in conjunction with --include)")
+    parser.add_argument('--joint',
+                        dest="joint",
+                        type=validate_joint,
+                        # default=[],
+                        help="joint account treatment. Syntax --joint COL where COL is the name of a column which holds weights for one of the members of the joint account. The weight is considered as a percentage, i.e. it must be less or equal to 1.")
 
     config.args = parser.parse_args()
     config.args.nocache = False
@@ -180,10 +185,12 @@ def is_gift_dupe(tx1: TransactionRecord, tx2: TransactionRecord):
                 and tx1.buy.asset == tx2.buy.asset
                 and abs(tx1.buy.quantity - tx2.buy.quantity) <= 0.00000001
             ) or (  # sent
-                (tx1.t_type in (TransactionRecord.TYPE_GIFT_SPOUSE,
+                (tx1.t_type in (TransactionRecord.TYPE_SPEND,
+                                TransactionRecord.TYPE_GIFT_SPOUSE,
                                 TransactionRecord.TYPE_GIFT_SENT,
                                 TransactionRecord.TYPE_CHARITY_SENT) and tx2.t_type == TransactionRecord.TYPE_WITHDRAWAL
-                 or tx2.t_type in (TransactionRecord.TYPE_GIFT_SPOUSE,
+                 or tx2.t_type in (TransactionRecord.TYPE_SPEND,
+                                   TransactionRecord.TYPE_GIFT_SPOUSE,
                                    TransactionRecord.TYPE_GIFT_SENT,
                                    TransactionRecord.TYPE_CHARITY_SENT) and tx1.t_type == TransactionRecord.TYPE_WITHDRAWAL)
                 and tx1.sell.asset == tx2.sell.asset
@@ -201,13 +208,20 @@ def remove_gift_dupes(txs):
                     indices.append(i if txs[i].t_type in (TransactionRecord.TYPE_WITHDRAWAL, TransactionRecord.TYPE_DEPOSIT) else j)
             else:
                 break
-    indices = list(set(indices))
+    indices = list(set(indices))  # make unique
     if len(indices) > 0:
         indices.sort(reverse=True)
         for i in indices:
+            print("%sWARNING%s income/spend/gift duplicate removed: %s" % (Back.YELLOW + Fore.BLACK, Back.RESET + Fore.YELLOW, txs[i].to_csv()))
             del txs[i]
-        print("%sWARNING%s Removed %d transfers detected as duplicates of gifts. Use --allowgiftdupes to disable this." % (Back.YELLOW + Fore.BLACK, Back.RESET + Fore.YELLOW, len(indices)))
     return txs
+
+def validate_joint(value):
+    return {
+        "field":      value,
+        "column":     0,
+        "findcolumn": lambda header, field: field if isinstance(field, int) else [e.lower() for e in header].index(field.lower())
+    }
 
 def validate_field_filter(value):
     try:
