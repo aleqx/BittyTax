@@ -2,11 +2,11 @@
 # (c) Nano Nano Ltd 2020
 
 from ..config import config
-from .datasource import DataSourceBase, ExchangeRatesAPI, RatesAPI
+from .datasource import DataSourceBase, ExchangeRatesAPI, RatesAPI, Frankfurter
 from .exceptions import UnexpectedDataSourceError
 
 class AssetData(object):
-    FIAT_DATASOURCES = (ExchangeRatesAPI.__name__, RatesAPI.__name__)
+    FIAT_DATASOURCES = (ExchangeRatesAPI.__name__, RatesAPI.__name__, Frankfurter.__name__)
 
     def __init__(self):
         self.data_sources = {}
@@ -112,10 +112,11 @@ class AssetData(object):
                                                          asset_id['id'],
                                                          asset_id['data_source'])
 
-                if req_symbol == 'BTC' or asset_id['data_source'] in self.FIAT_DATASOURCES:
-                    asset_id['quote'] = config.CCY
-                else:
-                    asset_id['quote'] = 'BTC'
+                asset_id['quote'] = config.CCY
+                # if req_symbol == 'BTC' or asset_id['data_source'] in self.FIAT_DATASOURCES:
+                #     asset_id['quote'] = config.CCY
+                # else:
+                #     asset_id['quote'] = 'BTC'
 
                 date = req_date.strftime('%Y-%m-%d')
                 pair = req_symbol + '/' + asset_id['quote']

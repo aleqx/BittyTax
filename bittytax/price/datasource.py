@@ -235,6 +235,37 @@ class RatesAPI(DataSourceBase):
                                'url': url}},
                            timestamp)
 
+class Frankfurter(DataSourceBase):
+    def __init__(self):
+        super(Frankfurter, self).__init__()
+        currencies = ['EUR', 'USD', 'JPY', 'BGN', 'CYP', 'CZK', 'DKK', 'EEK', 'GBP', 'HUF',
+                      'LTL', 'LVL', 'MTL', 'PLN', 'ROL', 'RON', 'SEK', 'SIT', 'SKK', 'CHF',
+                      'ISK', 'NOK', 'HRK', 'RUB', 'TRL', 'TRY', 'AUD', 'BRL', 'CAD', 'CNY',
+                      'HKD', 'IDR', 'ILS', 'INR', 'KRW', 'MXN', 'MYR', 'NZD', 'PHP', 'SGD',
+                      'THB', 'ZAR']
+        self.assets = {c: {'name': 'Fiat ' + c} for c in currencies}
+
+    def get_latest(self, asset, quote, _asset_id=None):
+        json_resp = self.get_json(
+            "https://api.frankfurter.app/latest?from=%s&to=%s" % (asset, quote)
+        )
+        return Decimal(repr(json_resp['rates'][quote])) \
+                if 'rates' in json_resp and quote in json_resp['rates'] else None
+
+    def get_historical(self, asset, quote, timestamp, _asset_id=None):
+        url = "https://api.frankfurter.app/%s?from=%s&to=%s" % (
+            timestamp.strftime('%Y-%m-%d'), asset, quote)
+        json_resp = self.get_json(url)
+        pair = self.pair(asset, quote)
+        # Date returned in response might not be date requested due to weekends/holidays
+        self.update_prices(pair,
+                           {timestamp.strftime('%Y-%m-%d'): {
+                               'price': Decimal(repr(json_resp['rates'][quote])) \
+                                        if 'rates' in json_resp and quote \
+                                        in json_resp['rates'] else None,
+                               'url': url}},
+                           timestamp)
+
 class CoinDesk(DataSourceBase):
     def __init__(self):
         super(CoinDesk, self).__init__()
@@ -272,7 +303,7 @@ class CryptoCompare(DataSourceBase):
         return Decimal(repr(json_resp[quote])) if quote in json_resp else None
 
     def get_historical(self, asset, quote, timestamp, _asset_id=None):
-        url = "https://min-api.cryptocompare.com/data/histoday?aggregate=1&extraParams=%s" \
+        url = "https://min-api.cryptocompare.com/data/histoday?tryConversion=false&aggregate=1&extraParams=%s" \
               "&fsym=%s&tsym=%s&limit=%s&toTs=%d" % (
                   self.USER_AGENT, asset, quote, CRYPTOCOMPARE_MAX_DAYS,
                   self.epoch_time(timestamp + timedelta(days=CRYPTOCOMPARE_MAX_DAYS)))
@@ -280,11 +311,12 @@ class CryptoCompare(DataSourceBase):
         json_resp = self.get_json(url)
         pair = self.pair(asset, quote)
         # Warning - CryptoCompare returns 0 as data for missing dates, convert these to None.
+        ohlc = config.DATA_SOURCE_TIME
         if 'Data' in json_resp:
             self.update_prices(pair,
                                {datetime.fromtimestamp(d['time']).strftime('%Y-%m-%d'): {
-                                   'price': Decimal(repr(d['close'])) if 'close' in d and \
-                                           d['close'] else None,
+                                   'price': Decimal(repr(d[ohlc])) if ohlc in d and
+                                                                      d[ohlc] else None,
                                    'url': url} for d in json_resp['Data']},
                                timestamp)
 
@@ -325,6 +357,44 @@ class CoinGecko(DataSourceBase):
                                    'price': Decimal(repr(p[1])) if p[1] else None,
                                    'url': url} for p in json_resp['prices']},
                                timestamp)
+
+class CoinMarketCap(DataSourceBase):
+    def __init__(self):
+        super(CoinMarketCap, self).__init__()
+        json_resp = self.get_json("https://web-api.coinmarketcap.com/v1/cryptocurrency/map")
+        self.ids = {c['id']: {'symbol': c['symbol'].strip().upper(), 'name': c['name'].strip()}
+                    for c in json_resp['data']}
+        self.assets = {c['symbol'].strip().upper(): {'id': c['id'], 'name': c['name'].strip()}
+                       for c in json_resp['data']}
+        self.get_config_assets()
+
+    def get_latest(self, asset, quote, asset_id=None):
+        if asset_id is None:
+            asset_id = self.assets[asset]['id']
+
+        json_resp = self.get_json("https://web-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=%d&convert=%s" % (asset_id, quote.upper()))
+        try:
+            return Decimal(repr(json_resp['data'][str(asset_id)]['quote'][quote.upper()]['price']))
+        except KeyError:
+            return None
+
+    def get_historical(self, asset, quote, timestamp, asset_id=None):
+        if asset_id is None:
+            asset_id = self.assets[asset]['id']
+
+        url = "https://web-api.coinmarketcap.com/v1/cryptocurrency/ohlcv/historical?id=%d&convert=%s&time_start=2017-01-01&time_end=%s" % (
+            asset_id, quote.upper(), datetime.now().strftime('%Y-%m-%d'))
+        json_resp = self.get_json(url)
+        pair = self.pair(asset, quote)
+        ohlc = config.DATA_SOURCE_TIME
+        if 'data' in json_resp and 'quotes' in json_resp['data']:
+            self.update_prices(pair,
+                               {datetime.strptime(p['time_open'], "%Y-%m-%dT%H:%M:%S.%fZ").strftime('%Y-%m-%d'): {
+                                   'price': Decimal(repr(p['quote'][quote.upper()][ohlc]))
+                                            if 'quote' in p and quote.upper() in p['quote'] and ohlc in p['quote'][quote.upper()] else None,
+                                   'url': url} for p in json_resp['data']['quotes']},
+                               timestamp)
+
 
 class CoinPaprika(DataSourceBase):
     def __init__(self):

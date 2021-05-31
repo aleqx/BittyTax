@@ -19,7 +19,7 @@ class ValueAsset(object):
         self.price_report = {}
 
     def get_value(self, asset, timestamp, quantity):
-        if asset == config.CCY:
+        if asset == config.CCY or asset in config.force_fiat_list and config.force_fiat_list[asset] == config.CCY:
             return quantity, True
 
         if quantity == 0:
@@ -64,25 +64,30 @@ class ValueAsset(object):
                                                asset, timestamp.strftime('%Y-%m-%d')))
             return self.get_latest_price(asset)
 
-        if asset == 'BTC' or asset in config.fiat_list:
-            asset_price_ccy, name, data_source, url = self.price_data.get_historical(asset,
-                                                                                     target_symbol,
-                                                                                     timestamp)
-            self.price_report_cache(asset, timestamp, name, data_source, url, asset_price_ccy)
-        else:
-            asset_price_btc, name, data_source, url = self.price_data.get_historical(asset,
-                                                                                     'BTC',
-                                                                                     timestamp)
-            if asset_price_btc is not None:
-                btc_price_ccy, name2, data_source2, url2 = self.price_data.get_historical(
-                    'BTC', target_symbol, timestamp)
-                if btc_price_ccy is not None:
-                    asset_price_ccy = btc_price_ccy * asset_price_btc
+        asset_price_ccy, name, data_source, url = self.price_data.get_historical(asset,
+                                                                                 target_symbol,
+                                                                                 timestamp)
+        self.price_report_cache(asset, timestamp, name, data_source, url, asset_price_ccy)
 
-                self.price_report_cache('BTC', timestamp, name2, data_source2, url2, btc_price_ccy)
-
-            self.price_report_cache(asset, timestamp, name, data_source, url, asset_price_ccy,
-                                    asset_price_btc)
+        # if asset == 'BTC' or asset in config.fiat_list:
+        #     asset_price_ccy, name, data_source, url = self.price_data.get_historical(asset,
+        #                                                                              target_symbol,
+        #                                                                              timestamp)
+        #     self.price_report_cache(asset, timestamp, name, data_source, url, asset_price_ccy)
+        # else:
+        #     asset_price_btc, name, data_source, url = self.price_data.get_historical(asset,
+        #                                                                              'BTC',
+        #                                                                              timestamp)
+        #     if asset_price_btc is not None:
+        #         btc_price_ccy, name2, data_source2, url2 = self.price_data.get_historical(
+        #             'BTC', target_symbol, timestamp)
+        #         if btc_price_ccy is not None:
+        #             asset_price_ccy = btc_price_ccy * asset_price_btc
+        #
+        #         self.price_report_cache('BTC', timestamp, name2, data_source2, url2, btc_price_ccy)
+        #
+        #     self.price_report_cache(asset, timestamp, name, data_source, url, asset_price_ccy,
+        #                             asset_price_btc)
 
         return asset_price_ccy, name, data_source
 
