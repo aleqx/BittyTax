@@ -13,7 +13,9 @@ from .version import __version__
 class Config(object):
     TAX_YEAR_START_MONTH = 4
     TAX_YEAR_START_DAY = 6
-    BED_AND_BREAKFAST_DAYS = 30
+    BNB_DAYS_INDIVIDUAL = 30
+    BNB_DAYS_BUSINESS = 10
+    BUSINESS_RULES = False
 
     TZ_INFOS = {'BST': dateutil.tz.gettz('Europe/London'),
                 'GMT': dateutil.tz.gettz('Europe/London')}
@@ -65,11 +67,12 @@ class Config(object):
         'tax_year_start_day': TAX_YEAR_START_DAY,
         'tax_year_start_month': TAX_YEAR_START_MONTH,
         'tax_year_first_year': None,
-        'bed_and_breakfast_days': BED_AND_BREAKFAST_DAYS,
+        'bed_and_breakfast_days': -1,
         'ignore_wallet_names': False,
         'force_fiat_list': FORCE_FIAT_LIST,
         'renamed_asset_list': RENAMED_ASSET_LIST,
         'coinbase_zero_fees_are_gifts': False,
+        'business_rules': BUSINESS_RULES,
     }
 
     def __init__(self):

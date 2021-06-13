@@ -90,6 +90,9 @@ class TaxCalculator(object):
             print("%spool: total transactions=%d" % (Fore.CYAN, len(self.all_transactions())))
 
     def match(self, rule):
+        return self.match_business(rule) if config.business_rules else self.match_individual(rule)
+
+    def match_individual(self, rule):
         sell_index = buy_index = 0
 
         if not self.buys_ordered:
@@ -158,12 +161,80 @@ class TaxCalculator(object):
         if config.args.debug:
             print("%smatch: total transactions=%d" % (Fore.CYAN, len(self.all_transactions())))
 
+    def match_business(self, rule):
+        sell_index = buy_index = 0
+
+        if not self.sells_ordered:
+            return
+
+        if config.args.debug:
+            print("%smatch %s transactions" % (Fore.CYAN, rule.lower()))
+
+        pbar = tqdm(total=len(self.buys_ordered),
+                    unit='t',
+                    desc="%smatch %s transactions%s" % (Fore.CYAN, rule.lower(), Fore.GREEN),
+                    disable=bool(config.args.debug or not sys.stdout.isatty()))
+
+        while buy_index < len(self.buys_ordered):
+            s = self.sells_ordered[sell_index]
+            b = self.buys_ordered[buy_index]
+
+            if (not s.matched and not b.matched and s.asset == b.asset and
+                    self._rule_match(b.timestamp, s.timestamp, rule)):
+                if config.args.debug:
+                    if s.quantity > b.quantity:
+                        print("%smatch: %s" % (Fore.GREEN, b.__str__(quantity_bold=True)))
+                        print("%smatch: %s" % (Fore.GREEN, s))
+                    elif b.quantity > s.quantity:
+                        print("%smatch: %s" % (Fore.GREEN, b))
+                        print("%smatch: %s" % (Fore.GREEN, s.__str__(quantity_bold=True)))
+                    else:
+                        print("%smatch: %s" % (Fore.GREEN, b.__str__(quantity_bold=True)))
+                        print("%smatch: %s" % (Fore.GREEN, s.__str__(quantity_bold=True)))
+
+                if s.quantity > b.quantity:
+                    s_remainder = s.split_sell(b.quantity)
+                    self.sells_ordered.insert(sell_index + 1, s_remainder)
+                    if config.args.debug:
+                        print("%smatch:   split: %s" % (Fore.YELLOW, s.__str__(quantity_bold=True)))
+                        print("%smatch:   split: %s" % (Fore.YELLOW, s_remainder))
+                elif b.quantity > s.quantity:
+                    b_remainder = b.split_buy(s.quantity)
+                    self.buys_ordered.insert(buy_index + 1, b_remainder)
+                    if config.args.debug:
+                        print("%smatch:   split: %s" % (Fore.YELLOW, b.__str__(quantity_bold=True)))
+                        print("%smatch:   split: %s" % (Fore.YELLOW, b_remainder))
+                    pbar.total += 1
+
+                s.matched = b.matched = True
+                tax_event = TaxEventCapitalGains(rule, b, s, b.cost,
+                                                 (b.fee_value or Decimal(0)) +
+                                                 (s.fee_value or Decimal(0)))
+                self.tax_events[self._which_tax_year(tax_event.date)].append(tax_event)
+                if config.args.debug:
+                    print("%smatch:   %s" % (Fore.CYAN, tax_event))
+
+                # Find next buy
+                buy_index += 1
+                pbar.update(1)
+                sell_index = 0
+            else:
+                sell_index += 1
+                if sell_index >= len(self.sells_ordered):
+                    buy_index += 1
+                    pbar.update(1)
+                    sell_index = 0
+
+        pbar.close()
+
+        if config.args.debug:
+            print("%smatch: total transactions=%d" % (Fore.CYAN, len(self.all_transactions())))
+
     def _rule_match(self, s_timestamp, b_timestamp, rule):
         if rule == self.DISPOSAL_SAME_DAY:
             return b_timestamp.date() == s_timestamp.date()
         elif rule == self.DISPOSAL_BED_AND_BREAKFAST:
-            return (s_timestamp.date() < b_timestamp.date() and
-                    b_timestamp.date() <= s_timestamp.date() + timedelta(days=config.bed_and_breakfast_days))
+            return s_timestamp.date() < b_timestamp.date() <= s_timestamp.date() + timedelta(days=config.bed_and_breakfast_days)
         else:
             raise Exception
 

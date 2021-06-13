@@ -87,13 +87,16 @@ def main():
                             config.tax_year_start_day, config.tax_year_start_month))
     parser.add_argument('--bnb',
                         type=validate_bnb,
-                        help="bed and breakfast duration must be at least 1 (default %d)" % (
+                        help="bed and breakfast duration, must be at least 1 (default %d)" % (
                             config.bed_and_breakfast_days))
     parser.add_argument('--transfers',
                         dest="transfers_include",
                         type=int,
                         default=int(config.transfers_include),
                         help="1=consider transfers, 0=ignore transfers from tax calculation only, -1=ignore transfers entirely")
+    parser.add_argument('--business',
+                        action='store_true',
+                        help="activate bed and breakfast rules for businesses and also sets bnb duration to 10 (unless overriden by --bnb)")
     parser.add_argument('--export',
                         action='store_true',
                         help="export your transaction records populated with price data")
@@ -122,6 +125,9 @@ def main():
     config.args = parser.parse_args()
     config.args.nocache = False
     config.transfers_include = config.args.transfers_include > 0
+    config.business_rules = config.args.business
+    if config.bed_and_breakfast_days < 0:
+        config.bed_and_breakfast_days = config.BNB_DAYS_BUSINESS if config.business_rules else config.BNB_DAYS_INDIVIDUAL
 
     if config.args.debug:
         print("%s%s v%s" % (Fore.YELLOW, parser.prog, __version__))
