@@ -106,8 +106,8 @@ class ReportLog(object):
             if not config.args.summary:
                 self.audit()
 
-            print("\n%sTax Year - %d/%d%s" % (
-                Fore.CYAN+Style.BRIGHT, config.args.taxyear - 1, config.args.taxyear, Style.NORMAL))
+            print("\n%sTax Year - %d/%d%s%s" % (
+                Back.WHITE+Fore.BLACK, config.args.taxyear - 1, config.args.taxyear, ' ' * 70, Back.RESET))
             self.capital_gains(config.args.taxyear)
             if not config.args.summary:
                 self.income(config.args.taxyear)
@@ -119,8 +119,8 @@ class ReportLog(object):
                 self.audit()
 
             for tax_year in sorted(tax_report):
-                print("\n%sTax Year - %d/%d%s" % (
-                    Fore.CYAN+Style.BRIGHT, tax_year - 1, tax_year, Style.NORMAL))
+                print("\n%sTax Year - %d/%d%s%s" % (
+                    Back.WHITE+Fore.BLACK, tax_year - 1, tax_year, ' ' * 70, Back.RESET))
                 self.capital_gains(tax_year)
                 if not config.args.summary:
                     self.income(tax_year)
