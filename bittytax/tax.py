@@ -230,11 +230,13 @@ class TaxCalculator(object):
         if config.args.debug:
             print("%smatch: total transactions=%d" % (Fore.CYAN, len(self.all_transactions())))
 
-    def _rule_match(self, s_timestamp, b_timestamp, rule):
+    def _rule_match(self, tx1_timestamp, tx2_timestamp, rule):
+        # for individuals: tx1,tx2 = sell,buy
+        # for businesses:  tx1,tx2 = buy,sell (bnb rules are different for businesses)
         if rule == self.DISPOSAL_SAME_DAY:
-            return b_timestamp.date() == s_timestamp.date()
+            return tx2_timestamp.date() == tx1_timestamp.date()
         elif rule == self.DISPOSAL_BED_AND_BREAKFAST:
-            return s_timestamp.date() < b_timestamp.date() <= s_timestamp.date() + timedelta(days=config.bed_and_breakfast_days)
+            return tx1_timestamp.date() < tx2_timestamp.date() <= tx1_timestamp.date() + timedelta(days=config.bed_and_breakfast_days)
         else:
             raise Exception
 
