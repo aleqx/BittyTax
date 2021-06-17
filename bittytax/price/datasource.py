@@ -311,7 +311,7 @@ class CryptoCompare(DataSourceBase):
         json_resp = self.get_json(url)
         pair = self.pair(asset, quote)
         # Warning - CryptoCompare returns 0 as data for missing dates, convert these to None.
-        ohlc = config.DATA_SOURCE_TIME
+        ohlc = config.data_source_time
         if 'Data' in json_resp:
             self.update_prices(pair,
                                {datetime.fromtimestamp(d['time']).strftime('%Y-%m-%d'): {
@@ -386,7 +386,7 @@ class CoinMarketCap(DataSourceBase):
             asset_id, quote.upper(), datetime.now().strftime('%Y-%m-%d'))
         json_resp = self.get_json(url)
         pair = self.pair(asset, quote)
-        ohlc = config.DATA_SOURCE_TIME
+        ohlc = config.data_source_time
         if 'data' in json_resp and 'quotes' in json_resp['data']:
             self.update_prices(pair,
                                {datetime.strptime(p['time_open'], "%Y-%m-%dT%H:%M:%S.%fZ").strftime('%Y-%m-%d'): {
